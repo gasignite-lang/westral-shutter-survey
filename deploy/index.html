@@ -2369,6 +2369,24 @@
                 <p id="pdfError"
                     style="display: none; text-align: center; padding: 20px; color: var(--danger); font-size: 13px;">
                 </p>
+                <p style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 8px;">Tap any page
+                    to zoom in</p>
+            </div>
+
+            <!-- Fullscreen Brochure Viewer -->
+            <div id="brochureViewer"
+                style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.95); z-index:2000; flex-direction:column;">
+                <div
+                    style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; padding-top: max(12px, env(safe-area-inset-top));">
+                    <span style="color:white; font-size:14px; font-weight:600;" id="brochurePageLabel">Page 1</span>
+                    <button onclick="closeBrochureViewer()"
+                        style="background:none; border:none; color:white; font-size:28px; cursor:pointer; padding:4px 8px;">✕</button>
+                </div>
+                <div id="brochureViewerContent"
+                    style="flex:1; overflow:auto; -webkit-overflow-scrolling:touch; display:flex; align-items:flex-start; justify-content:center; padding:8px;">
+                    <img id="brochureViewerImg"
+                        style="max-width:none; width:100%; touch-action:pinch-zoom pan-x pan-y;" />
+                </div>
             </div>
         </div>
 
@@ -4104,6 +4122,9 @@
                     const canvas = document.createElement('canvas');
                     canvas.width = viewport.width;
                     canvas.height = viewport.height;
+                    canvas.style.cursor = 'zoom-in';
+                    const pageNum = i;
+                    canvas.addEventListener('click', function () { openBrochurePage(this, pageNum); });
                     containerEl.appendChild(canvas);
 
                     await page.render({
@@ -4118,6 +4139,30 @@
                 _pdfLoaded = false; // Allow retry
                 console.error('PDF load error:', err);
             }
+        }
+
+        function openBrochurePage(canvas, pageNum) {
+            const viewer = document.getElementById('brochureViewer');
+            const img = document.getElementById('brochureViewerImg');
+            const label = document.getElementById('brochurePageLabel');
+
+            // Convert canvas to image for native zoom
+            img.src = canvas.toDataURL('image/jpeg', 0.92);
+            label.textContent = 'Page ' + pageNum;
+            viewer.style.display = 'flex';
+
+            // Enable pinch-to-zoom by modifying viewport
+            document.querySelector('meta[name=viewport]').setAttribute('content',
+                'width=device-width, initial-scale=1.0, viewport-fit=cover');
+        }
+
+        function closeBrochureViewer() {
+            document.getElementById('brochureViewer').style.display = 'none';
+            document.getElementById('brochureViewerImg').src = '';
+
+            // Restore zoom lock for app
+            document.querySelector('meta[name=viewport]').setAttribute('content',
+                'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
         }
 
         // ============ REVIEW TAB FUNCTIONS ============
