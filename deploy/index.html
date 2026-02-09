@@ -3073,13 +3073,27 @@
             document.getElementById('jobComments').value = 'Consultant notes: Customer prefers minimal frame visible. Check recess depth in bathroom.';
             document.getElementById('jobComments').classList.add('scanned');
 
-            // Create room tabs from scan
+            // Create room tabs from scan with full structure
+            const defaultProduct = document.getElementById('specProduct').value || 'Woodlore';
+            const makeRoom = (name, product, scannedOverrides) => ({
+                name: name,
+                posts: [], dividers: [], packers: [], drawings: [],
+                frame: { top: 'YES', left: 'YES', right: 'YES', bottom: 'YES' },
+                specs: { product: product || defaultProduct },
+                product: product || defaultProduct,
+                scannedOverrides: scannedOverrides || {}
+            });
+
             state.rooms = [
-                { name: 'Master Bed', product: '' },
-                { name: 'Bed 2', product: '' },
-                { name: 'Living', product: '' },
-                { name: 'Bathroom', product: 'Waterproof', scannedOverrides: { product: true } }
+                makeRoom('Master Bed', defaultProduct),
+                makeRoom('Bed 2', defaultProduct),
+                makeRoom('Living', defaultProduct),
+                makeRoom('Bathroom', 'Waterproof', { product: true })
             ];
+
+            state.currentRoom = 0;
+            renderRoomTabs();
+            loadRoomData(0);
 
             alert('Scan Complete!\n\n✓ Customer details extracted\n✓ Product choices detected\n✓ 4 room tabs created\n\nTap any BLUE field to verify it (turns black).');
         }
