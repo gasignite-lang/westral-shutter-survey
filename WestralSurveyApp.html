@@ -16,6 +16,7 @@
     <meta name="format-detection" content="telephone=no">
     <title>Westral Shutter Survey</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         :root {
             --westral-green: #009a49;
@@ -3073,13 +3074,164 @@
             if (!input.files || !input.files[0]) return;
 
             const file = input.files[0];
-            // In a real app, this would send to OCR service
-            // For now, show processing message and use simulation data
-            alert('Processing image: ' + file.name + '\n\nNote: Real OCR integration pending.\nUsing demo data for now.');
-            simulateScan();
+            input.value = ''; // Clear for next scan
 
-            // Clear input for next scan
-            input.value = '';
+            // Show scanning overlay
+            showScanOverlay('Preparing image...');
+
+            const reader = new FileReader();
+            reader.onload = async function (e) {
+                try {
+                    updateScanOverlay('Running OCR...\nThis may take 10-20 seconds.');
+
+                    const result = await Tesseract.recognize(
+                        e.target.result,
+                        'eng',
+                        {
+                            logger: m => {
+                                if (m.status === 'recognizing text') {
+                                    const pct = Math.round((m.progress || 0) * 100);
+                                    updateScanOverlay('Reading text... ' + pct + '%');
+                                }
+                            }
+                        }
+                    );
+
+                    const text = result.data.text;
+                    hideScanOverlay();
+
+                    if (!text || text.trim().length < 10) {
+                        alert('Could not read text from this image.\nTry a clearer photo with good lighting.');
+                        return;
+                    }
+
+                    // Parse the OCR text and populate fields
+                    const parsed = parseOCRText(text);
+                    applyParsedScan(parsed, text);
+
+                } catch (err) {
+                    hideScanOverlay();
+                    console.error('OCR error:', err);
+                    alert('OCR failed: ' + err.message + '\nTry again with a clearer image.');
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ---- Scan overlay UI ----
+        function showScanOverlay(msg) {
+            let overlay = document.getElementById('scanOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'scanOverlay';
+                overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:3000;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;font-size:16px;text-align:center;padding:40px;';
+                overlay.innerHTML = '<div style="width:50px;height:50px;border:3px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:20px;"></div><div id="scanOverlayMsg"></div>';
+                document.body.appendChild(overlay);
+            }
+            overlay.style.display = 'flex';
+            document.getElementById('scanOverlayMsg').textContent = msg;
+        }
+
+        function updateScanOverlay(msg) {
+            const el = document.getElementById('scanOverlayMsg');
+            if (el) el.textContent = msg;
+        }
+
+        function hideScanOverlay() {
+            const el = document.getElementById('scanOverlay');
+            if (el) el.style.display = 'none';
+        }
+
+        // ---- Parse OCR extracted text ----
+        function parseOCRText(text) {
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 1);
+            const result = { name: '', address: '', phone: '', email: '', rooms: [], comments: '' };
+
+            for (const line of lines) {
+                // Name: look for Mr/Mrs/Ms/Miss/Dr or "Name:" prefix
+                if (!result.name && /(Mr|Mrs|Ms|Miss|Dr)\.?\s+\w/i.test(line)) {
+                    result.name = line.replace(/^.*?(Mr|Mrs|Ms|Miss|Dr)/i, '$1').trim();
+                }
+                if (!result.name && /^name\s*[:;]/i.test(line)) {
+                    result.name = line.replace(/^name\s*[:;]\s*/i, '').trim();
+                }
+
+                // Address: contains street keywords + number
+                if (!result.address && /\d+.*?(street|st|road|rd|drive|dr|avenue|ave|way|crescent|cres|place|pl|lane|ln|court|ct|terrace|tce|boulevard|blvd)/i.test(line)) {
+                    result.address = line.replace(/^address\s*[:;]\s*/i, '').trim();
+                }
+
+                // Phone: Australian mobile (04xx) or landline
+                if (!result.phone) {
+                    const phoneMatch = line.match(/(0[45]\d{2}[\s.-]?\d{3}[\s.-]?\d{3})/)
+                        || line.match(/(\(?0\d\)?[\s.-]?\d{4}[\s.-]?\d{4})/);
+                    if (phoneMatch) result.phone = phoneMatch[1];
+                }
+
+                // Email
+                if (!result.email) {
+                    const emailMatch = line.match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/i);
+                    if (emailMatch) result.email = emailMatch[0];
+                }
+
+                // Room names: look for common room keywords
+                const roomPattern = /(master|bed(?:room)?\s*\d?|living|lounge|kitchen|dining|bathroom|bath|ensuite|study|office|family|theatre|theater|laundry|garage|nursery|guest|rumpus|patio)/gi;
+                const roomMatches = line.match(roomPattern);
+                if (roomMatches) {
+                    roomMatches.forEach(r => {
+                        const name = r.trim();
+                        if (name.length > 2 && !result.rooms.some(x => x.toLowerCase() === name.toLowerCase())) {
+                            result.rooms.push(name.charAt(0).toUpperCase() + name.slice(1));
+                        }
+                    });
+                }
+            }
+
+            return result;
+        }
+
+        // ---- Apply parsed results to the form ----
+        function applyParsedScan(parsed, rawText) {
+            let populated = [];
+
+            if (parsed.name) { fillScanned('clientName', parsed.name); populated.push('Name'); }
+            if (parsed.address) { fillScanned('clientAddr', parsed.address); populated.push('Address'); }
+            if (parsed.phone) { fillScanned('clientPhone', parsed.phone); populated.push('Phone'); }
+            if (parsed.email) { fillScanned('clientEmail', parsed.email); populated.push('Email'); }
+
+            // Create rooms if found
+            if (parsed.rooms.length > 0) {
+                const defaultProduct = document.getElementById('specProduct').value || 'Woodlore';
+                const makeRoom = (name) => ({
+                    name: name,
+                    posts: [], dividers: [], packers: [], drawings: [],
+                    frame: { top: 'YES', left: 'YES', right: 'YES', bottom: 'YES' },
+                    specs: { product: defaultProduct },
+                    product: defaultProduct,
+                    scannedOverrides: {}
+                });
+                state.rooms = parsed.rooms.map(name => makeRoom(name));
+                state.currentRoom = 0;
+                renderRoomTabs();
+                loadRoomData(0);
+                populated.push(parsed.rooms.length + ' rooms');
+            }
+
+            // Put raw OCR text in comments for reference
+            const commentsEl = document.getElementById('jobComments');
+            commentsEl.value = 'OCR extracted text:\n' + rawText.substring(0, 500);
+            commentsEl.classList.add('scanned');
+
+            // Show results summary
+            let msg = 'Scan Complete!\n\n';
+            if (populated.length > 0) {
+                msg += '✓ Extracted: ' + populated.join(', ') + '\n\n';
+                msg += 'Tap any BLUE field to verify it (turns black).';
+            } else {
+                msg += 'Could not auto-detect fields, but the raw text has been placed in Comments.\n\n';
+                msg += 'You can manually copy values from the comments.';
+            }
+            alert(msg);
         }
 
         function simulateScan() {
