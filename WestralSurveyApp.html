@@ -3173,7 +3173,8 @@
                 const titleMatch = line.match(/\b(MRS?|MS|MISS|DR)\.?\s+([A-Z][A-Z\s'.,-]{2,40})/i);
                 if (titleMatch) {
                     let name = titleMatch[0].trim();
-                    // Clean up: remove trailing numbers, stray punctuation
+                    // Clean up: remove trailing numbers, form field words, stray punctuation
+                    name = name.replace(/\s+(Quote|Map|Request|Ref|Installer|Amount|Date|Contact|Instructions|Client|Fit)\b.*/i, '');
                     name = name.replace(/\s*\d+\s*$/, '').replace(/\s{2,}/g, ' ').trim();
                     if (name.length > 4) {
                         result.name = name;
