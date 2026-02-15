@@ -16,6 +16,7 @@
     <meta name="format-detection" content="telephone=no">
     <title>Westral Shutter Survey</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         :root {
             --westral-green: #009a49;
@@ -500,6 +501,11 @@
 
 <body>
     <div class="app">
+        <!-- VERSION BANNER -->
+        <div id="versionBanner"
+            style="background:#28a745; color:white; text-align:center; padding:8px; font-size:12px; font-weight:bold;">
+            v1.5 - CAMERA SCAN RESTORED
+        </div>
         <!-- ==================== PROJECT TAB ==================== -->
         <div id="v-project" class="view active">
             <div class="brand">
@@ -543,7 +549,7 @@
                 <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="3" />
                         <path
-                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l-.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
                     </svg> Product Choices</div>
                 <label class="label">Product Line</label>
                 <select id="specProduct" onfocus="verify(this)" onclick="verify(this)"
@@ -644,20 +650,7 @@
                 <textarea id="jobComments" rows="3" placeholder="Enter any specific details..."></textarea>
             </div>
 
-            <div class="card">
-                <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 19l7-7 3 3-7 7-3-3z" />
-                        <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
-                        <path d="M2 2l7.586 7.586" />
-                    </svg> Capture Customer Signature</div>
-                <div class="sig-box" id="sigBox" onclick="openSigModal('customer')">
-                    <span id="sigPlaceholder">Tap to sign</span>
-                    <canvas id="sigCanvas"></canvas>
-                    <div class="sig-check">✓</div>
-                </div>
-                <button class="btn btn-outline" onclick="clearProjectSig()" style="font-size: 12px; padding: 8px;">Clear
-                    Signature</button>
-            </div>
+
 
         </div>
 
@@ -719,11 +712,16 @@
                     </select>
                     <select id="roomFrame" class="room-spec-select" onchange="updateRoomSpec(this)"
                         onfocus="verify(this)">
-                        <option>Small Z Frame</option>
-                        <option>Large Z Frame</option>
-                        <option>L Frame</option>
+                        <option>Bullnose Z 38mm</option>
+                        <option>Bullnose Z 50mm</option>
+                        <option>Beaded Z 31mm</option>
+                        <option>Beaded L Frame</option>
+                        <option>Vintage L Frame</option>
                         <option>Direct Mount</option>
-                        <option>BNZ 501</option>
+                        <option>50mm Camber Deco</option>
+                        <option>50mm Classic Deco</option>
+                        <option>63mm Mission Deco</option>
+                        <option>76mm Ridge Deco</option>
                     </select>
                     <select id="roomStile" class="room-spec-select" onchange="updateRoomSpec(this)"
                         onfocus="verify(this)">
@@ -750,6 +748,7 @@
                         <option>Bright Brass</option>
                         <option>Antique Brass</option>
                         <option>Black</option>
+                        <option>Satin Nickel</option>
                     </select>
                     <select id="roomTilt" class="room-spec-select" onchange="updateRoomSpec(this)"
                         onfocus="verify(this)">
@@ -758,6 +757,7 @@
                     </select>
                     <select id="roomBlade" class="room-spec-select" onchange="updateRoomSpec(this)"
                         onfocus="verify(this)">
+                        <option>47mm</option>
                         <option>63mm</option>
                         <option>76mm</option>
                         <option>89mm</option>
@@ -904,6 +904,7 @@
                         font-size: 11px;
                         font-weight: 700;
                         color: white;
+                        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
                         cursor: pointer;
                         -webkit-tap-highlight-color: transparent;
                         z-index: 2;
@@ -1684,7 +1685,7 @@
                         <td>063 Decorator's White</td>
                     </tr>
                     <tr>
-                        <td>066 Winchester White 2010</td>
+                        <td>066 Winchester White</td>
                         <td>075 Storm Gray</td>
                         <td>076 Aura White</td>
                     </tr>
@@ -2369,6 +2370,24 @@
                 <p id="pdfError"
                     style="display: none; text-align: center; padding: 20px; color: var(--danger); font-size: 13px;">
                 </p>
+                <p style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 8px;">Tap any page
+                    to zoom in</p>
+            </div>
+
+            <!-- Fullscreen Brochure Viewer -->
+            <div id="brochureViewer"
+                style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.95); z-index:2000; flex-direction:column;">
+                <div
+                    style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; padding-top: max(12px, env(safe-area-inset-top));">
+                    <span style="color:white; font-size:14px; font-weight:600;" id="brochurePageLabel">Page 1</span>
+                    <button onclick="closeBrochureViewer()"
+                        style="background:none; border:none; color:white; font-size:28px; cursor:pointer; padding:4px 8px;">✕</button>
+                </div>
+                <div id="brochureViewerContent"
+                    style="flex:1; overflow:auto; -webkit-overflow-scrolling:touch; display:flex; align-items:flex-start; justify-content:center; padding:8px;">
+                    <img id="brochureViewerImg"
+                        style="max-width:none; width:100%; touch-action:pinch-zoom pan-x pan-y;" />
+                </div>
             </div>
         </div>
 
@@ -2466,10 +2485,13 @@
             <!-- Customer Signature -->
             <div class="card">
                 <div class="card-title">Customer Signature</div>
-                <div id="reviewCustSig"
-                    style="height: 80px; border: 2px dashed var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--danger); font-size: 12px;">
-                    Signature Missing - Please capture in Project tab
+                <div class="sig-box" id="sigBox" onclick="openSigModal('customer')">
+                    <span id="sigPlaceholder">Tap to sign</span>
+                    <canvas id="sigCanvas"></canvas>
+                    <div class="sig-check">✓</div>
                 </div>
+                <button class="btn btn-outline" onclick="clearProjectSig()" style="font-size: 12px; padding: 8px;">Clear
+                    Signature</button>
             </div>
 
             <!-- Surveyor Signature -->
@@ -2485,6 +2507,14 @@
             </div>
 
             <!-- Buttons -->
+            <button class="btn btn-outline" onclick="downloadCSV()" style="margin-bottom: 12px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                DOWNLOAD CSV
+            </button>
             <button class="btn btn-success" onclick="submitOrder()">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M22 2L11 13" />
@@ -2951,6 +2981,7 @@
 
         // ============ APP INIT ============
         function initApp() {
+            console.log("App Version: 1.4 (Clean Template)"); // Version check
             // Auto-populate date
             document.getElementById('jobDate').value = new Date().toLocaleDateString('en-AU');
 
@@ -3032,74 +3063,422 @@
             }).join('');
         }
 
-        // ============ SCAN FUNCTIONS ============
+        // ============ SCAN FUNCTIONS (Real OCR v2.0) ============
         function triggerScan() {
-            // Check if we're on mobile/tablet - use file input
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             if (isMobile) {
                 document.getElementById('scanInput').click();
             } else {
-                // Desktop: use simulation for demo
+                // Desktop: use demo data for testing
                 simulateScan();
             }
         }
 
-        function handleScanFile(input) {
-            if (!input.files || !input.files[0]) return;
-
-            const file = input.files[0];
-            // In a real app, this would send to OCR service
-            // For now, show processing message and use simulation data
-            alert('Processing image: ' + file.name + '\n\nNote: Real OCR integration pending.\nUsing demo data for now.');
-            simulateScan();
-
-            // Clear input for next scan
-            input.value = '';
+        // --- Scan Overlay UI ---
+        function showScanOverlay(msg) {
+            let ov = document.getElementById('scanOverlay');
+            if (!ov) {
+                ov = document.createElement('div');
+                ov.id = 'scanOverlay';
+                ov.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.88);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;font-size:17px;text-align:center;padding:40px;';
+                ov.innerHTML = '<div style="width:50px;height:50px;border:3px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:20px;"></div><div id="scanOverlayMsg" style="white-space:pre-line;"></div>';
+                document.body.appendChild(ov);
+            }
+            ov.style.display = 'flex';
+            document.getElementById('scanOverlayMsg').textContent = msg;
+        }
+        function updateScanOverlay(msg) {
+            const el = document.getElementById('scanOverlayMsg');
+            if (el) el.textContent = msg;
+        }
+        function hideScanOverlay() {
+            const el = document.getElementById('scanOverlay');
+            if (el) el.style.display = 'none';
         }
 
+        // --- Handle photo from camera ---
+        async function handleScanFile(input) {
+            if (!input.files || !input.files[0]) return;
+            const file = input.files[0];
+            input.value = ''; // Clear for next scan
+
+            showScanOverlay('Preparing image...');
+
+            const reader = new FileReader();
+            reader.onload = async function (e) {
+                try {
+                    updateScanOverlay('Reading order form...\nThis may take 10-20 seconds.');
+
+                    const result = await Tesseract.recognize(
+                        e.target.result,
+                        'eng',
+                        {
+                            logger: m => {
+                                if (m.status === 'recognizing text') {
+                                    const pct = Math.round((m.progress || 0) * 100);
+                                    updateScanOverlay('Reading text... ' + pct + '%');
+                                }
+                            }
+                        }
+                    );
+
+                    const text = result.data.text;
+                    hideScanOverlay();
+                    console.log('OCR Raw Text:', text);
+
+                    if (!text || text.trim().length < 20) {
+                        if (confirm('Could not read text from this image.\nTry a clearer photo with good lighting.\n\nLoad demo data instead?')) {
+                            simulateScan();
+                        }
+                        return;
+                    }
+
+                    // Parse the Westral order form
+                    const parsed = parseWestralOrder(text);
+                    // Show review screen
+                    showScanReview(parsed, text);
+
+                } catch (err) {
+                    hideScanOverlay();
+                    console.error('OCR error:', err);
+                    if (confirm('OCR failed: ' + err.message + '\n\nLoad demo data instead?')) {
+                        simulateScan();
+                    }
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // --- Parse Westral Installation Order Form ---
+        function parseWestralOrder(text) {
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 1);
+            const result = {
+                name: '',
+                address: '',
+                phone: '',
+                email: '',
+                quoteRef: '',
+                rooms: [],
+                product: '',
+                blade: '',
+                color: '',
+                rawText: text
+            };
+
+            const fullText = text.replace(/\n/g, ' ');
+
+            // --- Customer Name ---
+            // Look for MR/MRS/MS/MISS/DR patterns
+            for (const line of lines) {
+                const titleMatch = line.match(/\b(MRS?|MS|MISS|DR)\.?\s+([A-Z][A-Z\s'.,-]{2,40})/i);
+                if (titleMatch) {
+                    let name = titleMatch[0].trim();
+                    // Clean up: remove trailing numbers, stray punctuation
+                    name = name.replace(/\s*\d+\s*$/, '').replace(/\s{2,}/g, ' ').trim();
+                    if (name.length > 4) {
+                        result.name = name;
+                        break;
+                    }
+                }
+            }
+
+            // --- Address ---
+            // Look for Australian address pattern: number + street + suburb + postcode
+            for (const line of lines) {
+                // Match: number/unit + street name + 4-digit postcode nearby
+                const addrMatch = line.match(/\d+[\/\w]*\s+[A-Z][A-Za-z\s]+(?:DRIVE|DR|STREET|ST|ROAD|RD|AVENUE|AVE|CRESCENT|CRES|PLACE|PL|COURT|CT|WAY|LANE|LN|TERRACE|TCE|PARADE|PDE|CLOSE|CL|CIRCUIT|CCT|BOULEVARD|BLVD)[,\s]+[A-Z\s]+\d{4}/i);
+                if (addrMatch) {
+                    result.address = addrMatch[0].replace(/\s{2,}/g, ' ').trim();
+                    break;
+                }
+            }
+            // Fallback: look for "FIT AT:" prefix
+            if (!result.address) {
+                const fitAt = fullText.match(/FIT\s*AT[:\s]+(.+?\d{4})/i);
+                if (fitAt) {
+                    result.address = fitAt[1].replace(/\s{2,}/g, ' ').trim();
+                }
+            }
+
+            // --- Phone ---
+            // Australian phone: 04xx xxx xxx or 08 xxxx xxxx or landline
+            for (const line of lines) {
+                const phoneMatch = line.match(/(?:Contact\s*Numbers?[:\s]*)?(\b0[234578]\d{2}[\s.-]?\d{3}[\s.-]?\d{3}\b)/i);
+                if (phoneMatch) {
+                    result.phone = phoneMatch[1].replace(/[^0-9]/g, '');
+                    // Format nicely
+                    if (result.phone.length === 10) {
+                        result.phone = result.phone.replace(/(\d{4})(\d{3})(\d{3})/, '$1 $2 $3');
+                    }
+                    break;
+                }
+            }
+
+            // --- Quote/Reference Number ---
+            const quoteMatch = fullText.match(/(?:Quote|Ref|Reference)[:\s#]*(\d[\d\s.-]{4,15})/i);
+            if (quoteMatch) {
+                result.quoteRef = quoteMatch[1].replace(/\s+/g, '').trim();
+            }
+
+            // --- Email ---
+            const emailMatch = fullText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+            if (emailMatch) {
+                result.email = emailMatch[0];
+            }
+
+            // --- Rooms from line items table ---
+            // Pattern: line number (3 digits) + location name + qty + width + drop
+            // Example: "948 WC 1 560 1460" or "950 Bed1 1 1770 1460"
+            const roomPattern = /\b(\d{2,4})\s+([A-Za-z][A-Za-z0-9\s\/]{1,20}?)\s+(\d)\s+(\d{3,4})\s+(\d{3,4})\b/g;
+            let match;
+            const seenRooms = new Set();
+            while ((match = roomPattern.exec(text)) !== null) {
+                let locName = match[2].trim();
+                // Skip header rows or non-room text
+                if (/^(Line|Loc|Qty|Width|Drop|Product|No|Total|Check|Std|Extra)/i.test(locName)) continue;
+                if (seenRooms.has(locName.toLowerCase())) continue;
+                seenRooms.add(locName.toLowerCase());
+
+                const width = parseInt(match[4]);
+                const drop = parseInt(match[5]);
+
+                // Determine product from the surrounding text
+                let product = 'Woodlore'; // default
+                const lineStart = Math.max(0, text.lastIndexOf('\n', match.index));
+                const lineEnd = text.indexOf('\n', match.index + match[0].length);
+                const fullLine = text.substring(lineStart, lineEnd > 0 ? lineEnd : match.index + 200);
+
+                if (/waterproof|woodlore\s*plus/i.test(fullLine)) {
+                    product = 'Woodlore Plus';
+                } else if (/brightwood/i.test(fullLine)) {
+                    product = 'Brightwood';
+                } else if (/normandy/i.test(fullLine)) {
+                    product = 'Normandy';
+                }
+
+                result.rooms.push({
+                    name: locName,
+                    width: width,
+                    drop: drop,
+                    product: product
+                });
+            }
+
+            // --- Fallback room detection: just look for common room names ---
+            if (result.rooms.length === 0) {
+                const roomNames = ['WC', 'Bathroom', 'Bath', 'Ensuite', 'Bed1', 'Bed2', 'Bed3', 'Bed 1', 'Bed 2', 'Bed 3',
+                    'Bedroom', 'Master', 'Kitchen', 'Lounge', 'Living', 'Dining', 'Meals', 'Study', 'Office', 'Laundry',
+                    'Family', 'Theatre', 'Rumpus', 'Sunroom', 'Nursery', 'Guest'];
+                for (const rn of roomNames) {
+                    const rx = new RegExp('\\b' + rn + '\\b', 'i');
+                    if (rx.test(text) && !seenRooms.has(rn.toLowerCase())) {
+                        seenRooms.add(rn.toLowerCase());
+                        result.rooms.push({ name: rn, width: 0, drop: 0, product: 'Woodlore' });
+                    }
+                }
+            }
+
+            // --- Product (project-level default) ---
+            if (/woodlore\s*plus|waterproof\s*woodlore/i.test(fullText)) {
+                result.product = 'Woodlore Plus';
+            } else if (/brightwood/i.test(fullText)) {
+                result.product = 'Brightwood';
+            } else if (/normandy/i.test(fullText)) {
+                result.product = 'Normandy';
+            } else if (/woodlore/i.test(fullText)) {
+                result.product = 'Woodlore';
+            }
+
+            // --- Blade size ---
+            const bladeMatch = fullText.match(/(\d{2,3})\s*mm\s*Louvres?/i);
+            if (bladeMatch) {
+                result.blade = bladeMatch[1] + 'mm';
+            }
+
+            // --- Color ---
+            if (/pure\s*white/i.test(fullText)) result.color = '001 Pure White';
+            else if (/bright\s*white/i.test(fullText)) result.color = '003 Bright White';
+            else if (/silk\s*white/i.test(fullText)) result.color = '004 Silk White';
+
+            return result;
+        }
+
+        // --- Scan Review Modal ---
+        function showScanReview(parsed, rawText) {
+            let modal = document.getElementById('scanReviewModal');
+            if (modal) modal.remove();
+
+            modal = document.createElement('div');
+            modal.id = 'scanReviewModal';
+            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:9500;display:flex;flex-direction:column;overflow:auto;';
+
+            const roomRows = parsed.rooms.map((r, i) =>
+                `<tr>
+                    <td><input type="text" id="sr_room_${i}" value="${r.name}" style="width:100%;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:14px;"></td>
+                    <td><input type="number" id="sr_w_${i}" value="${r.width || ''}" style="width:70px;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:14px;text-align:center;" placeholder="W"></td>
+                    <td><input type="number" id="sr_d_${i}" value="${r.drop || ''}" style="width:70px;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:14px;text-align:center;" placeholder="D"></td>
+                    <td style="text-align:center;"><button onclick="this.closest('tr').remove()" style="background:#dc3545;color:white;border:none;border-radius:4px;padding:4px 10px;font-size:13px;">✕</button></td>
+                </tr>`
+            ).join('');
+
+            modal.innerHTML = `
+                <div style="max-width:500px;margin:auto;padding:20px;width:100%;">
+                    <h2 style="color:white;text-align:center;margin-bottom:16px;">📋 Scan Results — Review & Edit</h2>
+
+                    <div style="background:white;border-radius:12px;padding:16px;margin-bottom:12px;">
+                        <h3 style="margin:0 0 10px 0;color:#333;font-size:15px;">Customer Details</h3>
+                        <label style="font-size:12px;color:#666;font-weight:600;">Name</label>
+                        <input type="text" id="sr_name" value="${parsed.name}" placeholder="Not detected" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:15px;margin-bottom:8px;box-sizing:border-box;">
+                        <label style="font-size:12px;color:#666;font-weight:600;">Address</label>
+                        <input type="text" id="sr_addr" value="${parsed.address}" placeholder="Not detected" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:15px;margin-bottom:8px;box-sizing:border-box;">
+                        <label style="font-size:12px;color:#666;font-weight:600;">Phone</label>
+                        <input type="tel" id="sr_phone" value="${parsed.phone}" placeholder="Not detected" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:15px;margin-bottom:8px;box-sizing:border-box;">
+                        <label style="font-size:12px;color:#666;font-weight:600;">Email</label>
+                        <input type="email" id="sr_email" value="${parsed.email}" placeholder="Not detected" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:15px;margin-bottom:8px;box-sizing:border-box;">
+                        <label style="font-size:12px;color:#666;font-weight:600;">Quote / Ref #</label>
+                        <input type="text" id="sr_ref" value="${parsed.quoteRef}" placeholder="Not detected" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:15px;box-sizing:border-box;">
+                    </div>
+
+                    <div style="background:white;border-radius:12px;padding:16px;margin-bottom:12px;">
+                        <h3 style="margin:0 0 10px 0;color:#333;font-size:15px;">Rooms Found (${parsed.rooms.length})</h3>
+                        <table style="width:100%;border-collapse:collapse;" id="sr_roomTable">
+                            <thead><tr style="font-size:12px;color:#666;">
+                                <th style="text-align:left;padding:4px;">Room</th>
+                                <th style="text-align:left;padding:4px;">W (mm)</th>
+                                <th style="text-align:left;padding:4px;">D (mm)</th>
+                                <th></th>
+                            </tr></thead>
+                            <tbody>${roomRows || '<tr><td colspan="4" style="color:#999;padding:8px;text-align:center;">No rooms detected</td></tr>'}</tbody>
+                        </table>
+                        <button onclick="addReviewRoom()" style="margin-top:8px;background:#28a745;color:white;border:none;border-radius:6px;padding:8px 16px;font-size:13px;width:100%;">+ Add Room</button>
+                    </div>
+
+                    <div style="display:flex;gap:10px;margin-top:16px;">
+                        <button onclick="document.getElementById('scanReviewModal').remove()" style="flex:1;background:#6c757d;color:white;border:none;border-radius:8px;padding:14px;font-size:16px;font-weight:600;">Cancel</button>
+                        <button onclick="applyScanFromReview()" style="flex:2;background:#007bff;color:white;border:none;border-radius:8px;padding:14px;font-size:16px;font-weight:600;">✓ Apply to Form</button>
+                    </div>
+
+                    <details style="margin-top:16px;">
+                        <summary style="color:#aaa;font-size:12px;cursor:pointer;">Show raw OCR text</summary>
+                        <pre style="color:#888;font-size:11px;white-space:pre-wrap;background:#1a1a1a;padding:10px;border-radius:6px;max-height:200px;overflow:auto;margin-top:8px;">${rawText.replace(/</g, '&lt;')}</pre>
+                    </details>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // Add a blank room row in the review modal
+        function addReviewRoom() {
+            const tbody = document.querySelector('#sr_roomTable tbody');
+            const noRooms = tbody.querySelector('td[colspan]');
+            if (noRooms) noRooms.closest('tr').remove();
+            const idx = tbody.children.length;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="text" id="sr_room_${idx}" value="" style="width:100%;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:14px;" placeholder="Room name"></td>
+                <td><input type="number" id="sr_w_${idx}" value="" style="width:70px;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:14px;text-align:center;" placeholder="W"></td>
+                <td><input type="number" id="sr_d_${idx}" value="" style="width:70px;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:14px;text-align:center;" placeholder="D"></td>
+                <td style="text-align:center;"><button onclick="this.closest('tr').remove()" style="background:#dc3545;color:white;border:none;border-radius:4px;padding:4px 10px;font-size:13px;">✕</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        // Apply reviewed scan data to the form
+        function applyScanFromReview() {
+            const name = document.getElementById('sr_name').value.trim();
+            const addr = document.getElementById('sr_addr').value.trim();
+            const phone = document.getElementById('sr_phone').value.trim();
+            const email = document.getElementById('sr_email').value.trim();
+            const ref = document.getElementById('sr_ref').value.trim();
+
+            // Fill customer fields
+            if (name) fillScanned('clientName', name);
+            if (addr) fillScanned('clientAddr', addr);
+            if (phone) fillScanned('clientPhone', phone);
+            if (email) fillScanned('clientEmail', email);
+            if (ref) {
+                document.getElementById('jobRef').value = ref;
+                document.getElementById('jobRef').classList.add('scanned');
+            }
+
+            // Collect rooms from the review table
+            const tbody = document.querySelector('#sr_roomTable tbody');
+            const rows = tbody.querySelectorAll('tr');
+            const rooms = [];
+            rows.forEach((tr) => {
+                const nameInput = tr.querySelector('input[type="text"]');
+                const wInput = tr.querySelector('input[type="number"]');
+                if (nameInput && nameInput.value.trim()) {
+                    const allNums = tr.querySelectorAll('input[type="number"]');
+                    rooms.push({
+                        name: nameInput.value.trim(),
+                        width: allNums[0] ? parseInt(allNums[0].value) || 0 : 0,
+                        drop: allNums[1] ? parseInt(allNums[1].value) || 0 : 0
+                    });
+                }
+            });
+
+            // Create room tabs
+            if (rooms.length > 0) {
+                const defaultProduct = document.getElementById('specProduct').value || 'Woodlore';
+                state.rooms = rooms.map(r => ({
+                    name: r.name,
+                    posts: [], dividers: [], packers: [], drawings: [],
+                    frame: { top: 'YES', left: 'YES', right: 'YES', bottom: 'YES' },
+                    specs: { product: defaultProduct },
+                    product: defaultProduct,
+                    scannedOverrides: {}
+                }));
+                state.currentRoom = 0;
+                renderRoomTabs();
+                loadRoomData(0);
+            }
+
+            // Remove the review modal
+            document.getElementById('scanReviewModal').remove();
+
+            const roomCount = rooms.length;
+            alert('Scan Applied! ✓\n\n' +
+                (name ? '✓ Customer: ' + name + '\n' : '') +
+                (addr ? '✓ Address found\n' : '') +
+                (phone ? '✓ Phone: ' + phone + '\n' : '') +
+                (roomCount ? '✓ ' + roomCount + ' room(s) created\n' : '') +
+                '\nTap any BLUE field to verify it (turns black).');
+        }
+
+        // --- Demo/fallback simulation ---
         function simulateScan() {
-            // Simulate OCR extraction - all scanned data appears in BLUE
             fillScanned('clientName', 'Mrs. Jane Smith');
             fillScanned('clientAddr', '24 Ocean View Drive, Cottesloe WA 6011');
             fillScanned('clientPhone', '0412 345 678');
-            fillScanned('clientEmail', 'jane.smith@email.com'); // Not @westral.com.au
+            fillScanned('clientEmail', 'jane.smith@email.com');
 
-            fillScanned('specProduct', 'Woodlore');
-            fillScanned('specMount', 'Recess');
-            fillScanned('specFrame', 'Bullnose Z 38mm');
-            fillScanned('specBlade', '89mm');
-            fillScanned('specColor', '001 Pure White');
-
-            document.getElementById('jobComments').value = 'Consultant notes: Customer prefers minimal frame visible. Check recess depth in bathroom.';
-            document.getElementById('jobComments').classList.add('scanned');
-
-            // Create room tabs from scan with full structure
             const defaultProduct = document.getElementById('specProduct').value || 'Woodlore';
-            const makeRoom = (name, product, scannedOverrides) => ({
+            const makeRoom = (name, product) => ({
                 name: name,
                 posts: [], dividers: [], packers: [], drawings: [],
                 frame: { top: 'YES', left: 'YES', right: 'YES', bottom: 'YES' },
                 specs: { product: product || defaultProduct },
                 product: product || defaultProduct,
-                scannedOverrides: scannedOverrides || {}
+                scannedOverrides: {}
             });
 
             state.rooms = [
                 makeRoom('Master Bed', defaultProduct),
                 makeRoom('Bed 2', defaultProduct),
                 makeRoom('Living', defaultProduct),
-                makeRoom('Bathroom', 'Waterproof', { product: true })
+                makeRoom('Bathroom', 'Woodlore Plus')
             ];
-
             state.currentRoom = 0;
             renderRoomTabs();
             loadRoomData(0);
 
-            alert('Scan Complete!\n\n✓ Customer details extracted\n✓ Product choices detected\n✓ 4 room tabs created\n\nTap any BLUE field to verify it (turns black).');
+            alert('Demo Scan Loaded!\n\n✓ Sample customer details\n✓ 4 demo rooms created\n\nTap any BLUE field to verify it (turns black).');
         }
 
         function fillScanned(id, val) {
             const el = document.getElementById(id);
+            if (!el) return;
             el.value = val;
             el.classList.add('scanned');
         }
@@ -3169,15 +3548,25 @@
                     { value: 'Pure White', label: 'Pure White' },
                     { value: 'Silk White', label: 'Silk White' },
                     { value: 'Pearl', label: 'Pearl' },
+                    { value: 'Bisque', label: 'Bisque' },
+                    { value: 'Crisp Linen', label: 'Crisp Linen' },
+                    { value: 'String', label: 'String' },
+                    { value: 'Sea Mist', label: 'Sea Mist' },
+                    { value: 'Stone Gray', label: 'Stone Gray' },
+                    { value: 'Brown Gray', label: 'Brown Gray' },
                     { value: 'Bright Brass', label: 'Bright Brass' },
                     { value: 'Antique Brass', label: 'Antique Brass' },
                     { value: 'Black', label: 'Black' },
-                    { value: 'Satin Nickel', label: 'Satin Nickel' }
+                    { value: 'Stainless Steel', label: 'Stainless Steel' },
+                    { value: 'Nickel Plated', label: 'Nickel Plated' },
+                    { value: 'Brushed Nickel', label: 'Brushed Nickel' }
                 ],
                 frames: [
-                    'Bullnose Z 38mm', 'Bullnose Z 50mm', 'Beaded Z 31mm',
-                    'Beaded L Frame', 'Vintage L Frame', 'Direct Mount',
-                    '50mm Camber Deco', '50mm Classic Deco', '63mm Mission Deco', '76mm Ridge Deco'
+                    'Vintage Hang Strip', 'Beaded L', 'Vintage L', 'Deep Plain L',
+                    'Deep Bullnose Z', 'Crown Z', 'Bel Air Z', 'Plain L', 'Bullnose Z', 'Serrate Z',
+                    'Beaded Z', 'Tilt Out Z', 'Ridge Deco', 'Camber Deco', 'Mission Deco',
+                    'Classic Deco', 'Designer Sill Cap', 'Chamfer T-posts', 'T-post with Insert',
+                    'Deco Sill frame', 'Mission Sill Frame', 'Mission Sill Cap', '50mm/40mm Sill Plate'
                 ],
                 blades: ['47mm', '63mm', '76mm', '89mm', '114mm']
             },
@@ -3185,24 +3574,33 @@
                 colors: [
                     '001 Pure White', '002 Extra White', '003 Silk White', '004 Bright White', '006 Pearl',
                     '007 Ivory Lace', '009 Creamy', '012 Crisp Linen', '019 String', '032 Sea Mist',
-                    '042 Hall Gray', '063 Decorator\'s White', '066 Winchester White', '075 Storm Gray',
+                    '042 Hall Gray', '063 Decorator\'s White', '066 Winchester White 2010', '075 Storm Gray',
                     '076 Aura White', '080 Taupe Gray', '090 Simply White', '602 Dove'
                 ],
                 hinges: [
                     { value: 'Pure White', label: 'Pure White' },
                     { value: 'Silk White', label: 'Silk White' },
-                    { value: 'Bright White', label: 'Bright White' },
                     { value: 'Pearl', label: 'Pearl' },
-                    { value: 'Stainless Steel', label: 'Stainless Steel' },
+                    { value: 'Bisque', label: 'Bisque' },
+                    { value: 'Crisp Linen', label: 'Crisp Linen' },
+                    { value: 'String', label: 'String' },
+                    { value: 'Sea Mist', label: 'Sea Mist' },
+                    { value: 'Stone Gray', label: 'Stone Gray' },
+                    { value: 'Brown Gray', label: 'Brown Gray' },
+                    { value: 'Taupe Gray', label: 'Taupe Gray' },
                     { value: 'Bright Brass', label: 'Bright Brass' },
                     { value: 'Antique Brass', label: 'Antique Brass' },
                     { value: 'Black', label: 'Black' },
-                    { value: 'Satin Nickel', label: 'Satin Nickel' }
+                    { value: 'Stainless Steel', label: 'Stainless Steel' },
+                    { value: 'Nickel Plated', label: 'Nickel Plated' },
+                    { value: 'Brushed Nickel', label: 'Brushed Nickel' }
                 ],
                 frames: [
-                    'Bullnose Z 38mm', 'Bullnose Z 50mm', 'Beaded Z 31mm',
-                    'Beaded L Frame', 'Vintage L Frame', 'Direct Mount',
-                    '50mm Camber Deco', '50mm Classic Deco', '63mm Mission Deco', '76mm Ridge Deco'
+                    'Vintage Hang Strip', 'Vintage L', 'Beaded L', 'Deep Plain L',
+                    'Deep Bullnose Z', 'Crown Z', 'Bel Air Z', 'Plain L', 'Bullnose Z', 'Serrate Z',
+                    'Beaded Z', 'Tilt Out Z', 'Ridge Deco', 'Camber Deco', 'Mission Deco',
+                    'Classic Deco', 'Designer Sill Cap', 'Deco Sill frame', 'Chamfer T-posts',
+                    'T-post with Insert', 'Mission Sill Frame', 'Mission Sill Cap', '50mm/40mm Sill Plate'
                 ],
                 blades: ['47mm', '63mm', '76mm', '89mm', '114mm']
             },
@@ -3214,12 +3612,15 @@
                     '076 Aura White', '080 Taupe Gray', '090 Simply White', '602 Dove'
                 ],
                 hinges: [
-                    { value: 'Stainless Steel', label: 'Stainless Steel' }
+                    { value: 'Stainless Steel', label: 'Stainless Steel' },
+                    { value: 'Painted (No Warranty)', label: 'Painted (No Warranty)' }
                 ],
                 frames: [
-                    'Bullnose Z 38mm', 'Bullnose Z 50mm', 'Beaded Z 31mm',
-                    'Beaded L Frame', 'Vintage L Frame', 'Direct Mount',
-                    '50mm Camber Deco', '50mm Classic Deco'
+                    'Vintage Hang Strip', 'Vintage L', 'Beaded L', 'Deep Plain L',
+                    'Deep Bullnose Z', 'Crown Z', 'Bel Air Z', 'Plain L', 'Bullnose Z', 'Serrate Z',
+                    'Beaded Z', 'Tilt Out Z', 'Ridge Deco', 'Camber Deco', 'Mission Deco',
+                    'Classic Deco', 'Designer Sill Cap', 'Deco Sill frame', 'Chamfer T-posts',
+                    'T-post with Insert', 'Mission Sill Frame', 'Mission Sill Cap', '50mm/40mm Sill Plate'
                 ],
                 blades: ['47mm', '63mm', '76mm', '89mm', '114mm']
             },
@@ -3227,24 +3628,33 @@
                 colors: [
                     '001 Pure White', '002 Extra White', '003 Silk White', '004 Bright White', '006 Pearl',
                     '007 Ivory Lace', '009 Creamy', '012 Crisp Linen', '019 String', '032 Sea Mist',
-                    '042 Hall Gray', '063 Decorator\'s White', '066 Winchester White', '075 Storm Gray',
+                    '042 Hall Gray', '063 Decorator\'s White', '066 Winchester White 2010', '075 Storm Gray',
                     '076 Aura White', '080 Taupe Gray', '090 Simply White', '602 Dove'
                 ],
                 hinges: [
                     { value: 'Pure White', label: 'Pure White' },
                     { value: 'Silk White', label: 'Silk White' },
-                    { value: 'Bright White', label: 'Bright White' },
                     { value: 'Pearl', label: 'Pearl' },
-                    { value: 'Stainless Steel', label: 'Stainless Steel' },
+                    { value: 'Bisque', label: 'Bisque' },
+                    { value: 'Crisp Linen', label: 'Crisp Linen' },
+                    { value: 'String', label: 'String' },
+                    { value: 'Sea Mist', label: 'Sea Mist' },
+                    { value: 'Stone Gray', label: 'Stone Gray' },
+                    { value: 'Brown Gray', label: 'Brown Gray' },
+                    { value: 'Taupe Gray', label: 'Taupe Gray' },
                     { value: 'Bright Brass', label: 'Bright Brass' },
                     { value: 'Antique Brass', label: 'Antique Brass' },
                     { value: 'Black', label: 'Black' },
-                    { value: 'Satin Nickel', label: 'Satin Nickel' }
+                    { value: 'Stainless Steel', label: 'Stainless Steel' },
+                    { value: 'Nickel Plated', label: 'Nickel Plated' },
+                    { value: 'Brushed Nickel', label: 'Brushed Nickel' }
                 ],
                 frames: [
-                    'Bullnose Z 38mm', 'Bullnose Z 50mm', 'Beaded Z 31mm',
-                    'Beaded L Frame', 'Vintage L Frame', 'Direct Mount',
-                    '50mm Camber Deco', '50mm Classic Deco', '63mm Mission Deco', '76mm Ridge Deco'
+                    'Beaded L', 'Vintage Hang Strip', 'Vintage L', 'Deep Plain L',
+                    'Deep Bullnose Z', 'Crown Z', 'Bel Air Z', 'Plain L', 'Bullnose Z', 'Serrate Z',
+                    'Beaded Z', 'Tilt Out Z', 'Ridge Deco', 'Camber Deco', 'Mission Deco',
+                    'Classic Deco', 'Designer Sill Cap', 'Deco Sill frame', 'Chamfer T-posts',
+                    'T-post with Insert', 'Mission Sill Frame', 'Mission Sill Cap', '50mm/40mm Sill Plate'
                 ],
                 blades: ['47mm', '63mm', '76mm', '89mm', '114mm']
             },
@@ -3277,9 +3687,11 @@
                     { value: 'Satin Nickel', label: 'Satin Nickel' }
                 ],
                 frames: [
-                    'Bullnose Z 38mm', 'Bullnose Z 50mm', 'Beaded Z 31mm',
-                    'Beaded L Frame', 'Vintage L Frame', 'Direct Mount',
-                    '50mm Camber Deco', '50mm Classic Deco', '63mm Mission Deco', '76mm Ridge Deco'
+                    'Vintage Hang Strip', 'Vintage L', 'Beaded L', 'Deep Plain L',
+                    'Deep Bullnose Z', 'Crown Z', 'Bel Air Z', 'Plain L', 'Bullnose Z', 'Serrate Z',
+                    'Beaded Z', 'Tilt Out Z', 'Ridge Deco', 'Camber Deco', 'Mission Deco',
+                    'Classic Deco', 'Designer Sill Cap', 'Deco Sill frame', 'Chamfer T-posts',
+                    'T-post with Insert', 'Mission Sill Frame', 'Mission Sill Cap', '50mm/40mm Sill Plate'
                 ],
                 blades: ['47mm', '63mm', '76mm', '89mm', '114mm']
             }
@@ -3758,21 +4170,23 @@
             populateRoomProductOptions(product);
 
             // Re-apply dependent values
-            ['Color', 'Hinge', 'Blade'].forEach(key => setVal(key));
+            ['Color', 'Hinge', 'Blade', 'Frame'].forEach(key => setVal(key));
         }
 
         function populateRoomProductOptions(product) {
-            // Populate Color, Hinge, Blade dropdowns based on product
+            // Populate Color, Hinge, Blade, and FRAME dropdowns based on product
             const colorSelect = document.getElementById('roomColor');
             const hingeSelect = document.getElementById('roomHinge');
             const bladeSelect = document.getElementById('roomBlade');
+            const frameSelect = document.getElementById('roomFrame');
 
             const opts = productOptionsData[product] || productOptionsData['Woodlore'];
 
             // Store current values to preserve if valid (though we re-set them in loadRoomSpecs)
             const prevColor = colorSelect.value;
             const prevHinge = hingeSelect.value;
-            const prevBlade = bladeSelect.value; // Corrected from prevHinge
+            const prevBlade = bladeSelect.value;
+            const prevFrame = frameSelect ? frameSelect.value : '';
 
             // Update Color dropdown
             colorSelect.innerHTML = opts.colors.map(c => `<option value="${c}">${c}</option>`).join('');
@@ -3782,6 +4196,16 @@
 
             // Update Blade dropdown
             bladeSelect.innerHTML = opts.blades.map(b => `<option value="${b}">${b}</option>`).join('');
+
+            // Update Frame dropdown (New Addition)
+            if (frameSelect && opts.frames) {
+                frameSelect.innerHTML = opts.frames.map(f => `<option value="${f}">${f}</option>`).join('');
+                // If previous frame is valid for new product, keep it? 
+                // Mostly handled by loadRoomSpecs, but good for interactive changes
+                if (opts.frames.includes(prevFrame)) {
+                    frameSelect.value = prevFrame;
+                }
+            }
         }
 
         function updateRoomSpec(el) {
@@ -4104,6 +4528,9 @@
                     const canvas = document.createElement('canvas');
                     canvas.width = viewport.width;
                     canvas.height = viewport.height;
+                    canvas.style.cursor = 'zoom-in';
+                    const pageNum = i;
+                    canvas.addEventListener('click', function () { openBrochurePage(this, pageNum); });
                     containerEl.appendChild(canvas);
 
                     await page.render({
@@ -4118,6 +4545,30 @@
                 _pdfLoaded = false; // Allow retry
                 console.error('PDF load error:', err);
             }
+        }
+
+        function openBrochurePage(canvas, pageNum) {
+            const viewer = document.getElementById('brochureViewer');
+            const img = document.getElementById('brochureViewerImg');
+            const label = document.getElementById('brochurePageLabel');
+
+            // Convert canvas to image for native zoom
+            img.src = canvas.toDataURL('image/jpeg', 0.92);
+            label.textContent = 'Page ' + pageNum;
+            viewer.style.display = 'flex';
+
+            // Enable pinch-to-zoom by modifying viewport
+            document.querySelector('meta[name=viewport]').setAttribute('content',
+                'width=device-width, initial-scale=1.0, viewport-fit=cover');
+        }
+
+        function closeBrochureViewer() {
+            document.getElementById('brochureViewer').style.display = 'none';
+            document.getElementById('brochureViewerImg').src = '';
+
+            // Restore zoom lock for app
+            document.querySelector('meta[name=viewport]').setAttribute('content',
+                'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
         }
 
         // ============ REVIEW TAB FUNCTIONS ============
@@ -4881,7 +5332,8 @@
 
             // Create email body
             const subject = encodeURIComponent(`Shutter Order - ${job.ref || 'No Ref'} - ${job.client || 'Unknown'}`);
-            const body = encodeURIComponent(`Job Reference: ${job.ref}\nClient: ${job.client}\nAddress: ${job.address}\nDate: ${job.date}\n\nProduct: ${job.product}\nColour: ${job.colour}\nFrame: ${job.frame}\nLouvre: ${job.louvreSize}\n\nRooms: ${job.roomCount || 0}\n\nComments: ${job.comments || 'None'}`);
+            let bodyText = `Job Reference: ${job.ref}\nClient: ${job.client}\nAddress: ${job.address}\nDate: ${job.date}\n\nProduct: ${job.product}\nColour: ${job.colour}\nFrame: ${job.frame}\nLouvre: ${job.louvreSize}\n\nRooms: ${job.roomCount || 0}\n\nComments: ${job.comments || 'None'}\n\nNOTE: A full CSV spreadsheet has been downloaded to your device. Please attach it to this email.`;
+            const body = encodeURIComponent(bodyText);
 
             window.location.href = `mailto:?subject=${subject}&body=${body}`;
         }
@@ -4976,6 +5428,69 @@
                 });
             });
         }
+
+
+
+        function downloadCSV() {
+            const client = document.getElementById('clientName').value || 'Unknown_Client';
+            const headers = ['Room', 'Product', 'Method', 'Colour', 'Hinge', 'Blade', 'Tilt', 'Layout', 'Panels', 'Stile', 'Frame', 'Left', 'Top', 'Right', 'Bottom', 'Mount', 'LightBlock', 'Tpost', 'Width', 'Height', 'Midrail', 'Split', 'Blockout', 'RingPull', 'Handle', 'Picture', 'Flyscreen', 'Notes'];
+
+            let csvContent = headers.join(',') + '\n';
+
+            state.rooms.forEach((r, i) => {
+                const s = r.specs || {};
+                const row = [
+                    (i + 1) + ':' + (r.name || 'Room'),
+                    s.product || '-',
+                    s.mountMethod || '-',
+                    (s.color || '-').replace(',', ' '),
+                    s.hinge || '-',
+                    s.blade || '-',
+                    s.tilt || '-',
+                    r.layout || '-',
+                    r.panels || '-',
+                    s.stile || '-',
+                    (r.frameName || '-').replace(',', ' '),
+                    r.frameL || '-',
+                    r.frameT || '-',
+                    r.frameR || '-',
+                    r.frameB || '-',
+                    s.mount || '-',
+                    r.lightBlock || '-',
+                    r.tPost || '-',
+                    r.width || '-',
+                    r.height || '-',
+                    r.midrail || '-',
+                    r.split ? 'Yes' : '-',
+                    r.blockout ? 'Yes' : '-',
+                    r.ringPull ? 'Yes' : '-',
+                    r.handle ? 'Yes' : '-',
+                    r.picture ? 'Yes' : '-',
+                    r.flyscreen ? 'Yes' : '-',
+                    (r.notes || '').replace(',', ' ').replace(/\n/g, ' ')
+                ];
+                csvContent += row.join(',') + '\n';
+            });
+
+            // Comments
+            const comments = document.getElementById('jobComments').value;
+            if (comments) {
+                csvContent += `\nCOMMENTS,${comments.replace(',', ' ').replace(/\n/g, ' ')}\n`;
+            }
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Order_${client.replace(/ /g, '_')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+
+
+
 
         // ============ START ============
         function init() {
