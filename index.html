@@ -16,7 +16,6 @@
     <meta name="format-detection" content="telephone=no">
     <title>Westral Shutter Survey</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         :root {
             --westral-green: #009a49;
@@ -501,13 +500,6 @@
 
 <body>
     <div class="app">
-        <!-- VERSION BANNER (Cache Buster) -->
-        <div id="versionBanner"
-            style="background:#28a745; color:white; text-align:center; padding:8px; font-size:12px; font-weight:bold;">
-            UPDATED: v1.4 - CLEAN TEMPLATE <button onclick="location.reload(true)"
-                style="margin-left:8px; border:1px solid white; background:none; color:white; border-radius:4px; padding:2px 6px;">Force
-                Reload</button>
-        </div>
         <!-- ==================== PROJECT TAB ==================== -->
         <div id="v-project" class="view active">
             <div class="brand">
@@ -525,8 +517,9 @@
                 <div><label class="label">Surveyor</label><input type="text" id="surveyor" placeholder="Name"></div>
             </div>
 
-            <!-- Hidden file input (Disabled) -->
-            <input type="file" id="scanInput" accept="image/*" capture="environment" style="display:none">
+            <!-- Hidden file input for camera/gallery on iPad/mobile -->
+            <input type="file" id="scanInput" accept="image/*" capture="environment" style="display:none"
+                onchange="handleScanFile(this)">
             <button class="btn btn-scan" onclick="triggerScan()" style="margin-bottom: 20px;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
@@ -726,16 +719,11 @@
                     </select>
                     <select id="roomFrame" class="room-spec-select" onchange="updateRoomSpec(this)"
                         onfocus="verify(this)">
-                        <option>Bullnose Z 38mm</option>
-                        <option>Bullnose Z 50mm</option>
-                        <option>Beaded Z 31mm</option>
-                        <option>Beaded L Frame</option>
-                        <option>Vintage L Frame</option>
+                        <option>Small Z Frame</option>
+                        <option>Large Z Frame</option>
+                        <option>L Frame</option>
                         <option>Direct Mount</option>
-                        <option>50mm Camber Deco</option>
-                        <option>50mm Classic Deco</option>
-                        <option>63mm Mission Deco</option>
-                        <option>76mm Ridge Deco</option>
+                        <option>BNZ 501</option>
                     </select>
                     <select id="roomStile" class="room-spec-select" onchange="updateRoomSpec(this)"
                         onfocus="verify(this)">
@@ -762,7 +750,6 @@
                         <option>Bright Brass</option>
                         <option>Antique Brass</option>
                         <option>Black</option>
-                        <option>Satin Nickel</option>
                     </select>
                     <select id="roomTilt" class="room-spec-select" onchange="updateRoomSpec(this)"
                         onfocus="verify(this)">
@@ -771,7 +758,6 @@
                     </select>
                     <select id="roomBlade" class="room-spec-select" onchange="updateRoomSpec(this)"
                         onfocus="verify(this)">
-                        <option>47mm</option>
                         <option>63mm</option>
                         <option>76mm</option>
                         <option>89mm</option>
@@ -2150,8 +2136,8 @@
                         <td colspan="3" style="background:var(--bg-light); font-weight:600;">LUXE Colours</td>
                     </tr>
                     <tr>
-                        <td>1003 White Matte LUXE</td>
-                        <td>1109 Silk Gray LUXE</td>
+                        <td>1003 White Matte</td>
+                        <td>1109 Silk Gray</td>
                         <td>1203 Black LUXE</td>
                     </tr>
 
@@ -2383,24 +2369,6 @@
                 <p id="pdfError"
                     style="display: none; text-align: center; padding: 20px; color: var(--danger); font-size: 13px;">
                 </p>
-                <p style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 8px;">Tap any page
-                    to zoom in</p>
-            </div>
-
-            <!-- Fullscreen Brochure Viewer -->
-            <div id="brochureViewer"
-                style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.95); z-index:2000; flex-direction:column;">
-                <div
-                    style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; padding-top: max(12px, env(safe-area-inset-top));">
-                    <span style="color:white; font-size:14px; font-weight:600;" id="brochurePageLabel">Page 1</span>
-                    <button onclick="closeBrochureViewer()"
-                        style="background:none; border:none; color:white; font-size:28px; cursor:pointer; padding:4px 8px;">✕</button>
-                </div>
-                <div id="brochureViewerContent"
-                    style="flex:1; overflow:auto; -webkit-overflow-scrolling:touch; display:flex; align-items:flex-start; justify-content:center; padding:8px;">
-                    <img id="brochureViewerImg"
-                        style="max-width:none; width:100%; touch-action:pinch-zoom pan-x pan-y;" />
-                </div>
             </div>
         </div>
 
@@ -2983,7 +2951,6 @@
 
         // ============ APP INIT ============
         function initApp() {
-            console.log("App Version: 1.4 (Clean Template)"); // Version check
             // Auto-populate date
             document.getElementById('jobDate').value = new Date().toLocaleDateString('en-AU');
 
@@ -3067,52 +3034,44 @@
 
         // ============ SCAN FUNCTIONS ============
         function triggerScan() {
-            // Force simulation for ALL devices (Original reliable behavior)
-            simulateScan();
+            // Check if we're on mobile/tablet - use file input
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (isMobile) {
+                document.getElementById('scanInput').click();
+            } else {
+                // Desktop: use simulation for demo
+                simulateScan();
+            }
         }
 
         function handleScanFile(input) {
-            // FORCE SIMULATION
+            if (!input.files || !input.files[0]) return;
+
+            const file = input.files[0];
+            // In a real app, this would send to OCR service
+            // For now, show processing message and use simulation data
+            alert('Processing image: ' + file.name + '\n\nNote: Real OCR integration pending.\nUsing demo data for now.');
             simulateScan();
-            if (input) input.value = '';
-        }
 
-        // ---- Scan overlay UI ----
-        function showScanOverlay(msg) {
-            let overlay = document.getElementById('scanOverlay');
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.id = 'scanOverlay';
-                overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:3000;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;font-size:16px;text-align:center;padding:40px;';
-                overlay.innerHTML = '<div style="width:50px;height:50px;border:3px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:20px;"></div><div id="scanOverlayMsg"></div>';
-                document.body.appendChild(overlay);
-            }
-            overlay.style.display = 'flex';
-            document.getElementById('scanOverlayMsg').textContent = msg;
+            // Clear input for next scan
+            input.value = '';
         }
-
-        function updateScanOverlay(msg) {
-            const el = document.getElementById('scanOverlayMsg');
-            if (el) el.textContent = msg;
-        }
-
-        function hideScanOverlay() {
-            const el = document.getElementById('scanOverlay');
-            if (el) el.style.display = 'none';
-        }
-
-        // ---- OCR Parsing REMOVED (Legacy unreliable code) ----
-        // The functions parseOCRText and applyParsedScan have been deleted.
-        // scanInput triggers now force simulateScan() directly.
 
         function simulateScan() {
-            // CLEAN TEMPLATE LOADER (User Request: No fake data, just structure)
-            // Does NOT fill client details or specs. Just sets up room tabs.
+            // Simulate OCR extraction - all scanned data appears in BLUE
+            fillScanned('clientName', 'Mrs. Jane Smith');
+            fillScanned('clientAddr', '24 Ocean View Drive, Cottesloe WA 6011');
+            fillScanned('clientPhone', '0412 345 678');
+            fillScanned('clientEmail', 'jane.smith@email.com'); // Not @westral.com.au
 
-            // Clear any previous "scanned" highlights from client fields
-            ['clientName', 'clientAddr', 'clientPhone', 'clientEmail'].forEach(id => {
-                document.getElementById(id).classList.remove('scanned');
-            });
+            fillScanned('specProduct', 'Woodlore');
+            fillScanned('specMount', 'Recess');
+            fillScanned('specFrame', 'Bullnose Z 38mm');
+            fillScanned('specBlade', '89mm');
+            fillScanned('specColor', '001 Pure White');
+
+            document.getElementById('jobComments').value = 'Consultant notes: Customer prefers minimal frame visible. Check recess depth in bathroom.';
+            document.getElementById('jobComments').classList.add('scanned');
 
             // Create room tabs from scan with full structure
             const defaultProduct = document.getElementById('specProduct').value || 'Woodlore';
@@ -3136,8 +3095,9 @@
             renderRoomTabs();
             loadRoomData(0);
 
-            alert('Template Loaded!\n\n✓ Room tabs created (Master, Bed 2, Living, Bath)\n✓ Ready for data entry');
+            alert('Scan Complete!\n\n✓ Customer details extracted\n✓ Product choices detected\n✓ 4 room tabs created\n\nTap any BLUE field to verify it (turns black).');
         }
+
         function fillScanned(id, val) {
             const el = document.getElementById(id);
             el.value = val;
@@ -4144,9 +4104,6 @@
                     const canvas = document.createElement('canvas');
                     canvas.width = viewport.width;
                     canvas.height = viewport.height;
-                    canvas.style.cursor = 'zoom-in';
-                    const pageNum = i;
-                    canvas.addEventListener('click', function () { openBrochurePage(this, pageNum); });
                     containerEl.appendChild(canvas);
 
                     await page.render({
@@ -4161,30 +4118,6 @@
                 _pdfLoaded = false; // Allow retry
                 console.error('PDF load error:', err);
             }
-        }
-
-        function openBrochurePage(canvas, pageNum) {
-            const viewer = document.getElementById('brochureViewer');
-            const img = document.getElementById('brochureViewerImg');
-            const label = document.getElementById('brochurePageLabel');
-
-            // Convert canvas to image for native zoom
-            img.src = canvas.toDataURL('image/jpeg', 0.92);
-            label.textContent = 'Page ' + pageNum;
-            viewer.style.display = 'flex';
-
-            // Enable pinch-to-zoom by modifying viewport
-            document.querySelector('meta[name=viewport]').setAttribute('content',
-                'width=device-width, initial-scale=1.0, viewport-fit=cover');
-        }
-
-        function closeBrochureViewer() {
-            document.getElementById('brochureViewer').style.display = 'none';
-            document.getElementById('brochureViewerImg').src = '';
-
-            // Restore zoom lock for app
-            document.querySelector('meta[name=viewport]').setAttribute('content',
-                'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
         }
 
         // ============ REVIEW TAB FUNCTIONS ============
