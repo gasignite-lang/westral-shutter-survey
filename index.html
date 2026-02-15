@@ -503,8 +503,8 @@
     <div class="app">
         <!-- VERSION BANNER (Cache Buster) -->
         <div id="versionBanner"
-            style="background:#dc3545; color:white; text-align:center; padding:8px; font-size:12px; font-weight:bold;">
-            UPDATED: v1.3 - OCR REMOVED <button onclick="location.reload(true)"
+            style="background:#28a745; color:white; text-align:center; padding:8px; font-size:12px; font-weight:bold;">
+            UPDATED: v1.4 - CLEAN TEMPLATE <button onclick="location.reload(true)"
                 style="margin-left:8px; border:1px solid white; background:none; color:white; border-radius:4px; padding:2px 6px;">Force
                 Reload</button>
         </div>
@@ -2150,8 +2150,8 @@
                         <td colspan="3" style="background:var(--bg-light); font-weight:600;">LUXE Colours</td>
                     </tr>
                     <tr>
-                        <td>1003 White Matte</td>
-                        <td>1109 Silk Gray</td>
+                        <td>1003 White Matte LUXE</td>
+                        <td>1109 Silk Gray LUXE</td>
                         <td>1203 Black LUXE</td>
                     </tr>
 
@@ -2983,7 +2983,7 @@
 
         // ============ APP INIT ============
         function initApp() {
-            console.log("App Version: 1.2 (Scan Fixed - OCR Removed)"); // Version check
+            console.log("App Version: 1.4 (Clean Template)"); // Version check
             // Auto-populate date
             document.getElementById('jobDate').value = new Date().toLocaleDateString('en-AU');
 
@@ -3106,20 +3106,13 @@
         // scanInput triggers now force simulateScan() directly.
 
         function simulateScan() {
-            // Simulate OCR extraction - all scanned data appears in BLUE
-            fillScanned('clientName', 'Mrs. Jane Smith');
-            fillScanned('clientAddr', '24 Ocean View Drive, Cottesloe WA 6011');
-            fillScanned('clientPhone', '0412 345 678');
-            fillScanned('clientEmail', 'jane.smith@email.com'); // Not @westral.com.au
+            // CLEAN TEMPLATE LOADER (User Request: No fake data, just structure)
+            // Does NOT fill client details or specs. Just sets up room tabs.
 
-            fillScanned('specProduct', 'Woodlore');
-            fillScanned('specMount', 'Recess');
-            fillScanned('specFrame', 'Bullnose Z 38mm');
-            fillScanned('specBlade', '89mm');
-            fillScanned('specColor', '001 Pure White');
-
-            document.getElementById('jobComments').value = 'Consultant notes: Customer prefers minimal frame visible. Check recess depth in bathroom.';
-            document.getElementById('jobComments').classList.add('scanned');
+            // Clear any previous "scanned" highlights from client fields
+            ['clientName', 'clientAddr', 'clientPhone', 'clientEmail'].forEach(id => {
+                document.getElementById(id).classList.remove('scanned');
+            });
 
             // Create room tabs from scan with full structure
             const defaultProduct = document.getElementById('specProduct').value || 'Woodlore';
@@ -3143,9 +3136,8 @@
             renderRoomTabs();
             loadRoomData(0);
 
-            alert('Scan Complete!\n\n✓ Customer details extracted\n✓ Product choices detected\n✓ 4 room tabs created\n\nTap any BLUE field to verify it (turns black).');
+            alert('Template Loaded!\n\n✓ Room tabs created (Master, Bed 2, Living, Bath)\n✓ Ready for data entry');
         }
-
         function fillScanned(id, val) {
             const el = document.getElementById(id);
             el.value = val;
