@@ -501,6 +501,13 @@
 
 <body>
     <div class="app">
+        <!-- VERSION BANNER (Cache Buster) -->
+        <div id="versionBanner"
+            style="background:#dc3545; color:white; text-align:center; padding:8px; font-size:12px; font-weight:bold;">
+            UPDATED: v1.3 - OCR REMOVED <button onclick="location.reload(true)"
+                style="margin-left:8px; border:1px solid white; background:none; color:white; border-radius:4px; padding:2px 6px;">Force
+                Reload</button>
+        </div>
         <!-- ==================== PROJECT TAB ==================== -->
         <div id="v-project" class="view active">
             <div class="brand">
@@ -518,9 +525,8 @@
                 <div><label class="label">Surveyor</label><input type="text" id="surveyor" placeholder="Name"></div>
             </div>
 
-            <!-- Hidden file input for camera/gallery on iPad/mobile -->
-            <input type="file" id="scanInput" accept="image/*" capture="environment" style="display:none"
-                onchange="handleScanFile(this)">
+            <!-- Hidden file input (Disabled) -->
+            <input type="file" id="scanInput" accept="image/*" capture="environment" style="display:none">
             <button class="btn btn-scan" onclick="triggerScan()" style="margin-bottom: 20px;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
@@ -2977,6 +2983,7 @@
 
         // ============ APP INIT ============
         function initApp() {
+            console.log("App Version: 1.2 (Scan Fixed - OCR Removed)"); // Version check
             // Auto-populate date
             document.getElementById('jobDate').value = new Date().toLocaleDateString('en-AU');
 
@@ -3060,62 +3067,14 @@
 
         // ============ SCAN FUNCTIONS ============
         function triggerScan() {
-            // Check if we're on mobile/tablet - use file input
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            if (isMobile) {
-                document.getElementById('scanInput').click();
-            } else {
-                // Desktop: use simulation for demo
-                simulateScan();
-            }
+            // Force simulation for ALL devices (Original reliable behavior)
+            simulateScan();
         }
 
         function handleScanFile(input) {
-            if (!input.files || !input.files[0]) return;
-
-            const file = input.files[0];
-            input.value = ''; // Clear for next scan
-
-            // Show scanning overlay
-            showScanOverlay('Preparing image...');
-
-            const reader = new FileReader();
-            reader.onload = async function (e) {
-                try {
-                    updateScanOverlay('Running OCR...\nThis may take 10-20 seconds.');
-
-                    const result = await Tesseract.recognize(
-                        e.target.result,
-                        'eng',
-                        {
-                            logger: m => {
-                                if (m.status === 'recognizing text') {
-                                    const pct = Math.round((m.progress || 0) * 100);
-                                    updateScanOverlay('Reading text... ' + pct + '%');
-                                }
-                            }
-                        }
-                    );
-
-                    const text = result.data.text;
-                    hideScanOverlay();
-
-                    if (!text || text.trim().length < 10) {
-                        alert('Could not read text from this image.\nTry a clearer photo with good lighting.');
-                        return;
-                    }
-
-                    // Parse the OCR text and populate fields
-                    const parsed = parseOCRText(text);
-                    applyParsedScan(parsed, text);
-
-                } catch (err) {
-                    hideScanOverlay();
-                    console.error('OCR error:', err);
-                    alert('OCR failed: ' + err.message + '\nTry again with a clearer image.');
-                }
-            };
-            reader.readAsDataURL(file);
+            // FORCE SIMULATION
+            simulateScan();
+            if (input) input.value = '';
         }
 
         // ---- Scan overlay UI ----
@@ -3142,97 +3101,9 @@
             if (el) el.style.display = 'none';
         }
 
-        // ---- Parse OCR extracted text ----
-        function parseOCRText(text) {
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 1);
-            const result = { name: '', address: '', phone: '', email: '', rooms: [], comments: '' };
-
-            for (const line of lines) {
-                // Name: look for Mr/Mrs/Ms/Miss/Dr or "Name:" prefix
-                if (!result.name && /(Mr|Mrs|Ms|Miss|Dr)\.?\s+\w/i.test(line)) {
-                    result.name = line.replace(/^.*?(Mr|Mrs|Ms|Miss|Dr)/i, '$1').trim();
-                }
-                if (!result.name && /^name\s*[:;]/i.test(line)) {
-                    result.name = line.replace(/^name\s*[:;]\s*/i, '').trim();
-                }
-
-                // Address: contains street keywords + number
-                if (!result.address && /\d+.*?(street|st|road|rd|drive|dr|avenue|ave|way|crescent|cres|place|pl|lane|ln|court|ct|terrace|tce|boulevard|blvd)/i.test(line)) {
-                    result.address = line.replace(/^address\s*[:;]\s*/i, '').trim();
-                }
-
-                // Phone: Australian mobile (04xx) or landline
-                if (!result.phone) {
-                    const phoneMatch = line.match(/(0[45]\d{2}[\s.-]?\d{3}[\s.-]?\d{3})/)
-                        || line.match(/(\(?0\d\)?[\s.-]?\d{4}[\s.-]?\d{4})/);
-                    if (phoneMatch) result.phone = phoneMatch[1];
-                }
-
-                // Email
-                if (!result.email) {
-                    const emailMatch = line.match(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/i);
-                    if (emailMatch) result.email = emailMatch[0];
-                }
-
-                // Room names: look for common room keywords
-                const roomPattern = /(master|bed(?:room)?\s*\d?|living|lounge|kitchen|dining|bathroom|bath|ensuite|study|office|family|theatre|theater|laundry|garage|nursery|guest|rumpus|patio)/gi;
-                const roomMatches = line.match(roomPattern);
-                if (roomMatches) {
-                    roomMatches.forEach(r => {
-                        const name = r.trim();
-                        if (name.length > 2 && !result.rooms.some(x => x.toLowerCase() === name.toLowerCase())) {
-                            result.rooms.push(name.charAt(0).toUpperCase() + name.slice(1));
-                        }
-                    });
-                }
-            }
-
-            return result;
-        }
-
-        // ---- Apply parsed results to the form ----
-        function applyParsedScan(parsed, rawText) {
-            let populated = [];
-
-            if (parsed.name) { fillScanned('clientName', parsed.name); populated.push('Name'); }
-            if (parsed.address) { fillScanned('clientAddr', parsed.address); populated.push('Address'); }
-            if (parsed.phone) { fillScanned('clientPhone', parsed.phone); populated.push('Phone'); }
-            if (parsed.email) { fillScanned('clientEmail', parsed.email); populated.push('Email'); }
-
-            // Create rooms if found
-            if (parsed.rooms.length > 0) {
-                const defaultProduct = document.getElementById('specProduct').value || 'Woodlore';
-                const makeRoom = (name) => ({
-                    name: name,
-                    posts: [], dividers: [], packers: [], drawings: [],
-                    frame: { top: 'YES', left: 'YES', right: 'YES', bottom: 'YES' },
-                    specs: { product: defaultProduct },
-                    product: defaultProduct,
-                    scannedOverrides: {}
-                });
-                state.rooms = parsed.rooms.map(name => makeRoom(name));
-                state.currentRoom = 0;
-                renderRoomTabs();
-                loadRoomData(0);
-                populated.push(parsed.rooms.length + ' rooms');
-            }
-
-            // Put raw OCR text in comments for reference
-            const commentsEl = document.getElementById('jobComments');
-            commentsEl.value = 'OCR extracted text:\n' + rawText.substring(0, 500);
-            commentsEl.classList.add('scanned');
-
-            // Show results summary
-            let msg = 'Scan Complete!\n\n';
-            if (populated.length > 0) {
-                msg += '✓ Extracted: ' + populated.join(', ') + '\n\n';
-                msg += 'Tap any BLUE field to verify it (turns black).';
-            } else {
-                msg += 'Could not auto-detect fields, but the raw text has been placed in Comments.\n\n';
-                msg += 'You can manually copy values from the comments.';
-            }
-            alert(msg);
-        }
+        // ---- OCR Parsing REMOVED (Legacy unreliable code) ----
+        // The functions parseOCRText and applyParsedScan have been deleted.
+        // scanInput triggers now force simulateScan() directly.
 
         function simulateScan() {
             // Simulate OCR extraction - all scanned data appears in BLUE
