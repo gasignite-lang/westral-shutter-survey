@@ -3104,49 +3104,113 @@
 
             showScanOverlay('Preparing image...');
 
-            const reader = new FileReader();
-            reader.onload = async function (e) {
-                try {
-                    updateScanOverlay('Reading order form...\nThis may take 10-20 seconds.');
+            try {
+                // Step 1: Load image
+                const img = await loadImage(file);
+                updateScanOverlay('Optimising for OCR...');
 
-                    const result = await Tesseract.recognize(
-                        e.target.result,
-                        'eng',
-                        {
-                            logger: m => {
-                                if (m.status === 'recognizing text') {
-                                    const pct = Math.round((m.progress || 0) * 100);
-                                    updateScanOverlay('Reading text... ' + pct + '%');
-                                }
+                // Step 2: Preprocess - resize, grayscale, contrast boost
+                const processedDataUrl = preprocessImage(img);
+                console.log('Image preprocessed. Original:', img.width + 'x' + img.height);
+
+                // Step 3: Run Tesseract OCR on preprocessed image
+                updateScanOverlay('Reading order form...\nThis may take 15-30 seconds.');
+
+                const result = await Tesseract.recognize(
+                    processedDataUrl,
+                    'eng',
+                    {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                const pct = Math.round((m.progress || 0) * 100);
+                                updateScanOverlay('Reading text... ' + pct + '%');
                             }
                         }
-                    );
-
-                    const text = result.data.text;
-                    hideScanOverlay();
-                    console.log('OCR Raw Text:', text);
-
-                    if (!text || text.trim().length < 20) {
-                        if (confirm('Could not read text from this image.\nTry a clearer photo with good lighting.\n\nLoad demo data instead?')) {
-                            simulateScan();
-                        }
-                        return;
                     }
+                );
 
-                    // Parse the Westral order form
-                    const parsed = parseWestralOrder(text);
-                    // Show review screen
-                    showScanReview(parsed, text);
+                const text = result.data.text;
+                hideScanOverlay();
+                console.log('OCR Raw Text:', text);
 
-                } catch (err) {
-                    hideScanOverlay();
-                    console.error('OCR error:', err);
-                    if (confirm('OCR failed: ' + err.message + '\n\nLoad demo data instead?')) {
+                if (!text || text.trim().length < 20) {
+                    if (confirm('Could not read text from this image.\nTry a clearer, well-lit photo.\n\nLoad demo data instead?')) {
                         simulateScan();
                     }
+                    return;
                 }
-            };
-            reader.readAsDataURL(file);
+
+                // Parse the Westral order form
+                const parsed = parseWestralOrder(text);
+                // Show review screen
+                showScanReview(parsed, text);
+
+            } catch (err) {
+                hideScanOverlay();
+                console.error('OCR error:', err);
+                if (confirm('OCR failed: ' + err.message + '\n\nLoad demo data instead?')) {
+                    simulateScan();
+                }
+            }
+        }
+
+        // Load image from file into an HTMLImageElement
+        function loadImage(file) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => reject(new Error('Could not load image'));
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
+        // Preprocess image for OCR: resize, grayscale, high contrast
+        function preprocessImage(img) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Resize to max 1500px on longest side (iPad photos are 4000+ px)
+            const MAX_SIZE = 1500;
+            let w = img.width, h = img.height;
+            if (w > MAX_SIZE || h > MAX_SIZE) {
+                const scale = MAX_SIZE / Math.max(w, h);
+                w = Math.round(w * scale);
+                h = Math.round(h * scale);
+            }
+            canvas.width = w;
+            canvas.height = h;
+
+            // Draw resized image
+            ctx.drawImage(img, 0, 0, w, h);
+
+            // Get pixel data for grayscale + contrast processing
+            const imageData = ctx.getImageData(0, 0, w, h);
+            const data = imageData.data;
+
+            // Convert to grayscale and apply contrast enhancement
+            for (let i = 0; i < data.length; i += 4) {
+                // Luminance grayscale
+                let gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+
+                // Contrast boost: stretch histogram (make darks darker, lights lighter)
+                // Simple contrast curve: ((gray/255 - 0.5) * contrast + 0.5) * 255
+                const contrast = 1.8; // Strong contrast boost
+                gray = ((gray / 255 - 0.5) * contrast + 0.5) * 255;
+                gray = Math.max(0, Math.min(255, gray));
+
+                // Threshold: push towards black or white for cleaner text
+                gray = gray < 140 ? 0 : 255;
+
+                data[i] = gray;     // R
+                data[i + 1] = gray; // G
+                data[i + 2] = gray; // B
+                // Alpha stays the same
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+
+            // Return as JPEG data URL (smaller than PNG, good enough for OCR)
+            return canvas.toDataURL('image/jpeg', 0.95);
         }
 
         // --- Parse Westral Installation Order Form ---
