@@ -3064,33 +3064,9 @@
         }
 
         // ============ SCAN FUNCTIONS (Gemini AI v3.0) ============
-        const GEMINI_KEY_STORAGE = 'westral_gemini_api_key';
-
-        function getGeminiApiKey() {
-            return localStorage.getItem(GEMINI_KEY_STORAGE) || '';
-        }
-
-        function promptForApiKey() {
-            const existing = getGeminiApiKey();
-            const msg = existing
-                ? 'Update your Gemini API key:\n(Current key: ...' + existing.slice(-6) + ')'
-                : '🔑 One-time setup\n\nTo scan order forms, you need a free Google Gemini API key.\n\n1. Go to: aistudio.google.com/apikey\n2. Click "Create API Key"\n3. Copy & paste it below:\n\n(Free tier: 15 requests/min, unlimited daily)';
-            const key = prompt(msg, existing);
-            if (key && key.trim().length > 10) {
-                localStorage.setItem(GEMINI_KEY_STORAGE, key.trim());
-                return key.trim();
-            }
-            return null;
-        }
+        const GEMINI_API_KEY = 'AIzaSyBtd2Hr4pOSJSUV6OlzE6TrDW5A17V4yTU';
 
         function triggerScan() {
-            // Check for API key first
-            let apiKey = getGeminiApiKey();
-            if (!apiKey) {
-                apiKey = promptForApiKey();
-                if (!apiKey) return; // User cancelled
-            }
-
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             if (isMobile) {
                 document.getElementById('scanInput').click();
@@ -3132,11 +3108,7 @@
             const file = input.files[0];
             input.value = ''; // Clear for next scan
 
-            let apiKey = getGeminiApiKey();
-            if (!apiKey) {
-                apiKey = promptForApiKey();
-                if (!apiKey) return;
-            }
+            const apiKey = GEMINI_API_KEY;
 
             showScanOverlay('Preparing image...');
 
@@ -3190,8 +3162,7 @@
                 console.error('Gemini scan error:', err);
 
                 if (err.message && err.message.includes('API key')) {
-                    alert('Invalid API key. Please try again.');
-                    localStorage.removeItem(GEMINI_KEY_STORAGE);
+                    alert('API key error: ' + err.message);
                     return;
                 }
 
@@ -3218,7 +3189,7 @@
 
         // Call Google Gemini 2.5 Flash Vision API
         async function callGeminiVision(apiKey, base64Image, mimeType) {
-            const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=' + apiKey;
+            const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + apiKey;
 
             const requestBody = {
                 contents: [{
