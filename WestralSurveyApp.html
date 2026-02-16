@@ -1057,14 +1057,7 @@
             </div>
 
             <!-- Save Button -->
-            <button class="btn btn-success" onclick="saveRoom()" style="margin-top: 16px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                    <polyline points="17 21 17 13 7 13 7 21" />
-                    <polyline points="7 3 7 8 15 8" />
-                </svg>
-                UPDATE »
-            </button>
+
         </div>
 
 
@@ -3021,6 +3014,9 @@
 
             // Load user defaults if any
             loadUserDefaults();
+
+            // Initialize auto-save for Survey fields
+            setupAutoSave();
         }
 
         // ============ NAV ============
@@ -3479,6 +3475,9 @@ Return ONLY the JSON, no markdown fences or extra text.`
                 const specKey = key.charAt(0).toLowerCase() + key.slice(1);
                 delete state.rooms[state.currentRoom].scannedOverrides[specKey];
             }
+
+            // Trigger auto-save so Review tab updates immediately
+            saveCurrentRoomData();
         }
 
         // ============ USER DEFAULTS ============
@@ -4443,8 +4442,37 @@ Return ONLY the JSON, no markdown fences or extra text.`
 
         function saveRoom() {
             saveCurrentRoomData();
-            renderRoomTabs();
-            alert('Room data saved!');
+            // renderRoomTabs(); // Avoid re-rendering tabs on every keystroke to prevent focus loss
+            // alert('Room data saved!'); // Silent save
+        }
+
+        function setupAutoSave() {
+            const surveyView = document.getElementById('v-survey');
+            if (!surveyView) return;
+
+            // Text inputs and textareas -> save on input
+            surveyView.querySelectorAll('input[type="text"], input[type="number"], textarea').forEach(el => {
+                el.addEventListener('input', () => {
+                    saveCurrentRoomData();
+                    // Special case for room name: update tab title (debounced ideally, but simple blur handling for now)
+                    if (el.id === 'roomName') {
+                        // Optional: debounce this if needed, or just update on blur
+                    }
+                });
+                // Ensure room name updates tabs on blur
+                if (el.id === 'roomName') {
+                    el.addEventListener('blur', renderRoomTabs);
+                }
+            });
+
+            // Selects and checkboxes -> save on change
+            surveyView.querySelectorAll('select, input[type="checkbox"]').forEach(el => {
+                el.addEventListener('change', () => {
+                    saveCurrentRoomData();
+                });
+            });
+
+            console.log('Auto-save listeners initialized');
         }
 
         // ============ SPECS TAB FUNCTIONS ============
