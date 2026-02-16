@@ -519,7 +519,7 @@
             <div class="header-row">
                 <div><label class="label">Date</label><input type="text" id="jobDate" readonly></div>
                 <div><label class="label">Reference #</label><input type="text" id="jobRef" placeholder="Quote/Ref"
-                        maxlength="8"></div>
+                        maxlength="8" onfocus="verify(this)" onclick="verify(this)"></div>
                 <div><label class="label">Surveyor</label><input type="text" id="surveyor" placeholder="Name"></div>
             </div>
 
@@ -3247,8 +3247,8 @@
                 summary.push('✓ ' + rooms.length + ' room tab(s) created');
             }
 
-            alert('Scan Applied! ✓\n\n' + summary.join('\n') +
-                '\n\nTap any BLUE field to verify it (turns black).');
+            // alert('Scan Applied! ✓\n\n' + summary.join('\n') +
+            //     '\n\nTap any BLUE field to verify it (turns black).');
         }
 
         // Fill a select element with scanned value (fuzzy match)
@@ -3449,14 +3449,20 @@ Return ONLY the JSON, no markdown fences or extra text.`
         }
 
         // ============ VERIFY (Blue → Black) ============
-        // For select elements: first click removes blue, second click opens dropdown
+        // For scanned fields: first click removes blue and blocks interaction, second click works normally
         function verify(el) {
             let isRoomSpec = el.id.startsWith('room');
 
-            if (el.tagName === 'SELECT' && el.classList.contains('scanned')) {
-                // Block dropdown on first click, just remove blue
+            if (el.classList.contains('scanned')) {
+                // Block interaction on first click, just remove blue
                 el.classList.remove('scanned');
-                el.blur(); // Prevent dropdown from opening
+                el.blur(); // Prevent keyboard/dropdown from opening
+
+                // If it's a select or input, we want to ensure any default behavior is blocked
+                if (window.event) {
+                    window.event.preventDefault();
+                    window.event.stopPropagation();
+                }
 
                 // Propagate verification to state if it's a room spec
                 if (isRoomSpec && state.rooms[state.currentRoom]?.scannedOverrides) {
@@ -3464,19 +3470,13 @@ Return ONLY the JSON, no markdown fences or extra text.`
                     const specKey = key.charAt(0).toLowerCase() + key.slice(1);
                     delete state.rooms[state.currentRoom].scannedOverrides[specKey];
                 }
+
+                // Trigger auto-save so Review tab updates immediately
+                saveCurrentRoomData();
                 return false;
             }
 
-            el.classList.remove('scanned');
-
-            // Also update state for non-blocking verify (or if verify called otherwise)
-            if (isRoomSpec && state.rooms[state.currentRoom]?.scannedOverrides) {
-                const key = el.id.replace('room', '');
-                const specKey = key.charAt(0).toLowerCase() + key.slice(1);
-                delete state.rooms[state.currentRoom].scannedOverrides[specKey];
-            }
-
-            // Trigger auto-save so Review tab updates immediately
+            // Trigger auto-save just in case
             saveCurrentRoomData();
         }
 
