@@ -504,7 +504,7 @@
         <!-- VERSION BANNER -->
         <div id="versionBanner"
             style="background:#28a745; color:white; text-align:center; padding:8px; font-size:12px; font-weight:bold;">
-            v1.5 - CAMERA SCAN RESTORED
+            v2.0 - LAUNCH BUILD
         </div>
         <!-- ==================== PROJECT TAB ==================== -->
         <div id="v-project" class="view active">
@@ -3006,7 +3006,7 @@
 
         // ============ APP INIT ============
         function initApp() {
-            console.log("App Version: 1.4 (Clean Template)"); // Version check
+            console.log("App Version: 2.0 (Launch Build)");
             // Auto-populate date
             document.getElementById('jobDate').value = new Date().toLocaleDateString('en-AU');
 
@@ -3452,8 +3452,6 @@ Return ONLY the JSON, no markdown fences or extra text.`
             el.classList.add('scanned');
         }
 
-        // ============ VERIFY (Blue → Black) ============
-        // For select elements: first click removes blue, second click opens dropdown
         // ============ VERIFY (Blue → Black) ============
         // For select elements: first click removes blue, second click opens dropdown
         function verify(el) {
@@ -4210,11 +4208,6 @@ Return ONLY the JSON, no markdown fences or extra text.`
             // Auto-save room data? usually explicitly saved, but we update state on tab switch
         }
 
-        // Legacy function replaced by loadRoomSpecs
-        function updateRefStrip() {
-            // This function is now replaced by loadRoomSpecs
-            loadRoomSpecs(null);
-        }
 
         // Posts Management
         function toggleDegrees() {
@@ -4376,7 +4369,6 @@ Return ONLY the JSON, no markdown fences or extra text.`
             else el.classList.remove('error');
         }
 
-        // Photo Capture
         // Photo Capture
         function capturePhoto() {
             // Use the hidden file input (scanInput logic but for photo)
@@ -4541,7 +4533,6 @@ Return ONLY the JSON, no markdown fences or extra text.`
         }
 
         // ============ REVIEW TAB FUNCTIONS ============
-        let surveyorSigCtx, surveyorSigDrawing = false;
 
         function generateReview() {
             // Populate Compact Client Header
@@ -4596,10 +4587,10 @@ Return ONLY the JSON, no markdown fences or extra text.`
                         <td>${r.panelQty || '-'}</td>
                         <td>${stile}</td>
                         <td>${frame}</td>
-                        <td>${r.frameLeft || '-'}</td>
-                        <td>${r.frameTop || '-'}</td>
-                        <td>${r.frameRight || '-'}</td>
-                        <td>${r.frameBottom || '-'}</td>
+                        <td>${r.frame?.left || '-'}</td>
+                        <td>${r.frame?.top || '-'}</td>
+                        <td>${r.frame?.right || '-'}</td>
+                        <td>${r.frame?.bottom || '-'}</td>
                         <td>${mount}</td>
                         <td>${r.lightBlock || '-'}</td>
                         <td>${r.horizontal || '-'}</td>
@@ -4612,7 +4603,7 @@ Return ONLY the JSON, no markdown fences or extra text.`
                         <td>${r.handle || '-'}</td>
                         <td>${r.picture ? '✓' : '-'}</td>
                         <td>${r.flyscreenBeading || '-'}</td>
-                        <td style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${r.notes || '-'}</td>
+                        <td style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${r.comments || '-'}</td>
                     </tr>`;
                 }).join('');
                 document.getElementById('ssMainRows').innerHTML = rows;
@@ -4645,67 +4636,6 @@ Return ONLY the JSON, no markdown fences or extra text.`
             }
         }
 
-        function initSurveyorSig() {
-            const canvas = document.getElementById('surveyorSigCanvas');
-            const box = document.getElementById('surveyorSigBox');
-            canvas.width = box.offsetWidth;
-            canvas.height = box.offsetHeight;
-            surveyorSigCtx = canvas.getContext('2d');
-            document.getElementById('surveyorSigPlaceholder').classList.add('hidden');
-
-            // Mouse events
-            canvas.onmousedown = function (e) {
-                const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                surveyorSigDrawing = true;
-                surveyorSigCtx.beginPath();
-                surveyorSigCtx.moveTo(x, y);
-                box.classList.add('has-sig'); // Mark as signed on first stroke
-            };
-            canvas.onmouseup = canvas.onmouseout = function () { surveyorSigDrawing = false; };
-            canvas.onmousemove = function (e) {
-                if (!surveyorSigDrawing) return;
-                const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                drawSurveyor(x, y);
-            };
-
-            // Touch events
-            canvas.ontouchstart = function (e) {
-                e.preventDefault();
-                const rect = canvas.getBoundingClientRect();
-                const touch = e.touches[0];
-                const x = touch.clientX - rect.left;
-                const y = touch.clientY - rect.top;
-                surveyorSigDrawing = true;
-                surveyorSigCtx.beginPath();
-                surveyorSigCtx.moveTo(x, y);
-                box.classList.add('has-sig'); // Mark as signed on first stroke
-            };
-            canvas.ontouchend = function (e) {
-                e.preventDefault();
-                surveyorSigDrawing = false;
-            };
-            canvas.ontouchmove = function (e) {
-                if (!surveyorSigDrawing) return;
-                e.preventDefault();
-                const rect = canvas.getBoundingClientRect();
-                const touch = e.touches[0];
-                const x = touch.clientX - rect.left;
-                const y = touch.clientY - rect.top;
-                drawSurveyor(x, y);
-            };
-
-            function drawSurveyor(x, y) {
-                surveyorSigCtx.lineWidth = 2;
-                surveyorSigCtx.lineCap = 'round';
-                surveyorSigCtx.strokeStyle = '#000';
-                surveyorSigCtx.lineTo(x, y);
-                surveyorSigCtx.stroke();
-            }
-        }
 
         function submitOrder() {
             generateReview();
@@ -4911,13 +4841,13 @@ Return ONLY the JSON, no markdown fences or extra text.`
                         csvEscape(job.tilt),
                         csvEscape(job.stile),
                         csvEscape(layout),
-                        r.frame?.left || r.frameLeft || '',
-                        r.frame?.top || r.frameTop || '',
-                        r.frame?.right || r.frameRight || '',
-                        r.frame?.bottom || r.frameBottom || '',
+                        r.frame?.left || '',
+                        r.frame?.top || '',
+                        r.frame?.right || '',
+                        r.frame?.bottom || '',
                         csvEscape(midrails),
                         csvEscape(r.split || ''),
-                        csvEscape(r.notes || '')
+                        csvEscape(r.comments || '')
                     ].join(','));
                 });
             }
@@ -5005,7 +4935,7 @@ Return ONLY the JSON, no markdown fences or extra text.`
             document.getElementById('specProduct').value = job.product || 'Woodlore';
             if (document.getElementById('specMountMethod')) document.getElementById('specMountMethod').value = job.method || 'Hinged';
             document.getElementById('specMount').value = job.mount || 'Recess';
-            document.getElementById('specFrame').value = job.frame || 'Small Z Frame';
+            document.getElementById('specFrame').value = job.frame || 'Bullnose Z 38mm';
             if (document.getElementById('specStile')) document.getElementById('specStile').value = job.stile || 'Beaded Butt';
             document.getElementById('specColor').value = job.colour || '001 Pure White';
             if (document.getElementById('specHinge')) document.getElementById('specHinge').value = job.hinge || 'Pure White';
@@ -5251,10 +5181,10 @@ Return ONLY the JSON, no markdown fences or extra text.`
                         <td>${r.name || 'Room ' + (i + 1)}</td>
                         <td>${layout}</td>
                         <td>${r.panelQty || '-'}</td>
-                        <td>${r.frameLeft || '-'}</td>
-                        <td>${r.frameTop || '-'}</td>
-                        <td>${r.frameRight || '-'}</td>
-                        <td>${r.frameBottom || '-'}</td>
+                        <td>${r.frame?.left || '-'}</td>
+                        <td>${r.frame?.top || '-'}</td>
+                        <td>${r.frame?.right || '-'}</td>
+                        <td>${r.frame?.bottom || '-'}</td>
                         <td>${r.mountType || '-'}</td>
                         <td>${r.lightBlock || '-'}</td>
                         <td>${r.horizontal || '-'}</td>
@@ -5266,7 +5196,7 @@ Return ONLY the JSON, no markdown fences or extra text.`
                         <td>${r.handle || '-'}</td>
                         <td>${r.picture ? '✓' : '-'}</td>
                         <td>${r.flyscreenBeading || '-'}</td>
-                        <td>${r.notes || '-'}</td>
+                        <td>${r.comments || '-'}</td>
                     </tr>`;
                 }).join('');
             }
@@ -5444,60 +5374,32 @@ Return ONLY the JSON, no markdown fences or extra text.`
 
 
         function downloadCSV() {
-            const client = document.getElementById('clientName').value || 'Unknown_Client';
-            const headers = ['Room', 'Product', 'Method', 'Colour', 'Hinge', 'Blade', 'Tilt', 'Layout', 'Panels', 'Stile', 'Frame', 'Left', 'Top', 'Right', 'Bottom', 'Mount', 'LightBlock', 'Tpost', 'Width', 'Height', 'Midrail', 'Split', 'Blockout', 'RingPull', 'Handle', 'Picture', 'Flyscreen', 'Notes'];
+            // Save current room data first so state is up-to-date
+            saveCurrentRoomData();
 
-            let csvContent = headers.join(',') + '\n';
-
-            state.rooms.forEach((r, i) => {
-                const s = r.specs || {};
-                const row = [
-                    (i + 1) + ':' + (r.name || 'Room'),
-                    s.product || '-',
-                    s.mountMethod || '-',
-                    (s.color || '-').replace(',', ' '),
-                    s.hinge || '-',
-                    s.blade || '-',
-                    s.tilt || '-',
-                    r.layout || '-',
-                    r.panels || '-',
-                    s.stile || '-',
-                    (r.frameName || '-').replace(',', ' '),
-                    r.frameL || '-',
-                    r.frameT || '-',
-                    r.frameR || '-',
-                    r.frameB || '-',
-                    s.mount || '-',
-                    r.lightBlock || '-',
-                    r.tPost || '-',
-                    r.width || '-',
-                    r.height || '-',
-                    r.midrail || '-',
-                    r.split ? 'Yes' : '-',
-                    r.blockout ? 'Yes' : '-',
-                    r.ringPull ? 'Yes' : '-',
-                    r.handle ? 'Yes' : '-',
-                    r.picture ? 'Yes' : '-',
-                    r.flyscreen ? 'Yes' : '-',
-                    (r.notes || '').replace(',', ' ').replace(/\n/g, ' ')
-                ];
-                csvContent += row.join(',') + '\n';
-            });
-
-            // Comments
-            const comments = document.getElementById('jobComments').value;
-            if (comments) {
-                csvContent += `\nCOMMENTS,${comments.replace(',', ' ').replace(/\n/g, ' ')}\n`;
-            }
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", `Order_${client.replace(/ /g, '_')}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // Build a job object from current form state
+            const job = {
+                ref: document.getElementById('jobRef').value,
+                client: document.getElementById('clientName').value,
+                address: document.getElementById('clientAddr').value,
+                email: document.getElementById('clientEmail')?.value || '',
+                phone: document.getElementById('clientPhone')?.value || '',
+                surveyor: document.getElementById('surveyor')?.value || '',
+                date: document.getElementById('jobDate').value,
+                product: document.getElementById('specProduct').value,
+                method: document.getElementById('specMountMethod')?.value || '',
+                colour: document.getElementById('specColor').value,
+                hinge: document.getElementById('specHinge')?.value || '',
+                louvreSize: document.getElementById('specBlade').value,
+                stile: document.getElementById('specStile')?.value || '',
+                frame: document.getElementById('specFrame').value,
+                tilt: document.getElementById('specTilt').value,
+                mount: document.getElementById('specMount').value,
+                roomsData: JSON.parse(JSON.stringify(state.rooms)),
+                roomCount: state.rooms.length,
+                comments: document.getElementById('jobComments').value
+            };
+            downloadOrderCSV(job);
         }
 
 
