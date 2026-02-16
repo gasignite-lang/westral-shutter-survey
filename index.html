@@ -3017,6 +3017,96 @@
 
             // Initialize auto-save for Survey fields
             setupAutoSave();
+
+            // Restore active session if any
+            restoreActiveSession();
+        }
+
+        function persistActiveSession() {
+            const activeSession = {
+                clientName: document.getElementById('clientName').value,
+                clientAddr: document.getElementById('clientAddr').value,
+                clientPhone: document.getElementById('clientPhone').value,
+                clientEmail: document.getElementById('clientEmail').value,
+                consultantEmail: document.getElementById('consultantEmail').value,
+                jobRef: document.getElementById('jobRef').value,
+                jobComments: document.getElementById('jobComments').value,
+                specProduct: document.getElementById('specProduct').value,
+                specMount: document.getElementById('specMount').value,
+                specMountMethod: document.getElementById('specMountMethod').value,
+                specFrame: document.getElementById('specFrame').value,
+                specStile: document.getElementById('specStile').value,
+                specColor: document.getElementById('specColor').value,
+                specHinge: document.getElementById('specHinge').value,
+                specTilt: document.getElementById('specTilt').value,
+                specBlade: document.getElementById('specBlade').value,
+                rooms: state.rooms,
+                currentRoom: state.currentRoom,
+                // Save signature dataURLs if they exist
+                customerSig: document.getElementById('sigBox').classList.contains('has-sig') ? document.getElementById('sigCanvas').toDataURL() : null,
+                surveyorSig: document.getElementById('surveyorSigBox').classList.contains('has-sig') ? document.getElementById('surveyorSigCanvas').toDataURL() : null
+            };
+            localStorage.setItem('westralActiveSession', JSON.stringify(activeSession));
+        }
+
+        function restoreActiveSession() {
+            const sessionData = localStorage.getItem('westralActiveSession');
+            if (!sessionData) return;
+            const session = JSON.parse(sessionData);
+            if (!session || !session.rooms || session.rooms.length === 0) return;
+
+            if (confirm(`Unfinished job found for ${session.clientName || 'Unknown Client'}.\n\nResume previous work?`)) {
+                document.getElementById('clientName').value = session.clientName || '';
+                document.getElementById('clientAddr').value = session.clientAddr || '';
+                document.getElementById('clientPhone').value = session.clientPhone || '';
+                document.getElementById('clientEmail').value = session.clientEmail || '';
+                document.getElementById('consultantEmail').value = session.consultantEmail || '';
+                document.getElementById('jobRef').value = session.jobRef || '';
+                document.getElementById('jobComments').value = session.jobComments || '';
+                document.getElementById('specProduct').value = session.specProduct || 'Woodlore';
+                document.getElementById('specMount').value = session.specMount || 'Inside';
+                document.getElementById('specMountMethod').value = session.specMountMethod || 'Z Frame';
+                document.getElementById('specFrame').value = session.specFrame || 'Bullnose Z 38mm';
+                document.getElementById('specStile').value = session.specStile || 'Stile 50mm';
+                document.getElementById('specColor').value = session.specColor || 'Pure White 001';
+                document.getElementById('specHinge').value = session.specHinge || 'White';
+                document.getElementById('specTilt').value = session.specTilt || 'Clearview';
+                document.getElementById('specBlade').value = session.specBlade || '89mm';
+
+                state.rooms = session.rooms;
+                state.currentRoom = session.currentRoom || 0;
+
+                // Sync UI
+                updateProductOptions();
+                renderRoomTabs();
+                loadRoomData(state.currentRoom);
+
+                // Restore Signatures
+                if (session.customerSig) {
+                    restoreSignature('sigCanvas', 'sigBox', 'sigPlaceholder', session.customerSig);
+                }
+                if (session.surveyorSig) {
+                    restoreSignature('surveyorSigCanvas', 'surveyorSigBox', 'surveyorSigPlaceholder', session.surveyorSig);
+                }
+            } else {
+                localStorage.removeItem('westralActiveSession');
+            }
+        }
+
+        function restoreSignature(canvasId, boxId, placeholderId, dataUrl) {
+            const canvas = document.getElementById(canvasId);
+            const box = document.getElementById(boxId);
+            const placeholder = document.getElementById(placeholderId);
+            const img = new Image();
+            img.onload = function () {
+                canvas.width = box.offsetWidth;
+                canvas.height = box.offsetHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvas.width, canvas.height);
+                box.classList.add('has-sig');
+                if (placeholder) placeholder.classList.add('hidden');
+            };
+            img.src = dataUrl;
         }
 
         // ============ NAV ============
@@ -3807,8 +3897,10 @@ Return ONLY the JSON, no markdown fences or extra text.`
 
             targetBox.classList.add('has-sig');
             if (placeholder) placeholder.classList.add('hidden');
-
             closeSigModal();
+
+            // Persist after signature save
+            persistActiveSession();
         }
 
         function closeSigModal() {
@@ -3850,6 +3942,7 @@ Return ONLY the JSON, no markdown fences or extra text.`
 
             state.rooms = [];
             clearProjectSig();
+            localStorage.removeItem('westralActiveSession');
             alert('Job data cleared.');
         }
 
@@ -4064,6 +4157,9 @@ Return ONLY the JSON, no markdown fences or extra text.`
                 blade: document.getElementById('roomBlade').value
             };
             r.drawings = [...roomDrawings];
+
+            // Backup entire job to LocalStorage
+            persistActiveSession();
         }
 
         function loadRoomData(idx) {
@@ -4447,32 +4543,42 @@ Return ONLY the JSON, no markdown fences or extra text.`
         }
 
         function setupAutoSave() {
-            const surveyView = document.getElementById('v-survey');
-            if (!surveyView) return;
+            // Include both Survey and Project view elements for auto-save
+            const autoSaveSelectors = '#v-survey, #v-project';
+            const context = document.querySelectorAll(autoSaveSelectors);
 
-            // Text inputs and textareas -> save on input
-            surveyView.querySelectorAll('input[type="text"], input[type="number"], textarea').forEach(el => {
-                el.addEventListener('input', () => {
-                    saveCurrentRoomData();
-                    // Special case for room name: update tab title (debounced ideally, but simple blur handling for now)
+            context.forEach(view => {
+                // Text inputs and textareas -> save on input
+                view.querySelectorAll('input[type="text"], input[type="number"], textarea').forEach(el => {
+                    el.addEventListener('input', () => {
+                        if (view.id === 'v-survey') {
+                            saveCurrentRoomData();
+                        } else {
+                            // On Project page, just persist the session
+                            persistActiveSession();
+                        }
+                    });
+                    // Ensure room name updates tabs on blur
                     if (el.id === 'roomName') {
-                        // Optional: debounce this if needed, or just update on blur
+                        el.addEventListener('blur', renderRoomTabs);
                     }
                 });
-                // Ensure room name updates tabs on blur
-                if (el.id === 'roomName') {
-                    el.addEventListener('blur', renderRoomTabs);
-                }
-            });
 
-            // Selects and checkboxes -> save on change
-            surveyView.querySelectorAll('select, input[type="checkbox"]').forEach(el => {
-                el.addEventListener('change', () => {
-                    saveCurrentRoomData();
+                // Selects and checkboxes -> save on change
+                view.querySelectorAll('select, input[type="checkbox"]').forEach(el => {
+                    el.addEventListener('change', () => {
+                        if (view.id === 'v-survey') {
+                            saveCurrentRoomData();
+                        } else {
+                            // On Project page, update product options (if needed) and persist
+                            if (el.id === 'specProduct') updateProductOptions();
+                            persistActiveSession();
+                        }
+                    });
                 });
             });
 
-            console.log('Auto-save listeners initialized');
+            console.log('Auto-save listeners initialized (Survey + Project)');
         }
 
         // ============ SPECS TAB FUNCTIONS ============
@@ -4754,6 +4860,9 @@ Return ONLY the JSON, no markdown fences or extra text.`
             }
 
             alert('Order Submitted!\n\n✓ Order placed in archive\n✓ CSV spreadsheet downloaded\n✓ Email to office opening...\n' + (clientEmail ? '✓ Client email will open next' : '⚠ No client email set') + '\n\n⚠ Remember to ATTACH the CSV file to the email!');
+
+            // Clear active session after successful submission
+            localStorage.removeItem('westralActiveSession');
         }
 
         // ============ PLEASE QUOTE - Clear survey tabs, keep client & product data ============
