@@ -16,7 +16,7 @@
     <meta name="format-detection" content="telephone=no">
     <title>Westral Shutter Survey</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <!-- Gemini AI scan uses REST API directly via fetch - no SDK needed -->
     <style>
         :root {
             --westral-green: #009a49;
@@ -3063,14 +3063,44 @@
             }).join('');
         }
 
-        // ============ SCAN FUNCTIONS (Real OCR v2.0) ============
+        // ============ SCAN FUNCTIONS (Gemini AI v3.0) ============
+        const GEMINI_KEY_STORAGE = 'westral_gemini_api_key';
+
+        function getGeminiApiKey() {
+            return localStorage.getItem(GEMINI_KEY_STORAGE) || '';
+        }
+
+        function promptForApiKey() {
+            const existing = getGeminiApiKey();
+            const msg = existing
+                ? 'Update your Gemini API key:\n(Current key: ...' + existing.slice(-6) + ')'
+                : '🔑 One-time setup\n\nTo scan order forms, you need a free Google Gemini API key.\n\n1. Go to: aistudio.google.com/apikey\n2. Click "Create API Key"\n3. Copy & paste it below:\n\n(Free tier: 15 requests/min, unlimited daily)';
+            const key = prompt(msg, existing);
+            if (key && key.trim().length > 10) {
+                localStorage.setItem(GEMINI_KEY_STORAGE, key.trim());
+                return key.trim();
+            }
+            return null;
+        }
+
         function triggerScan() {
+            // Check for API key first
+            let apiKey = getGeminiApiKey();
+            if (!apiKey) {
+                apiKey = promptForApiKey();
+                if (!apiKey) return; // User cancelled
+            }
+
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             if (isMobile) {
                 document.getElementById('scanInput').click();
             } else {
-                // Desktop: use demo data for testing
-                simulateScan();
+                // Desktop: use file picker or demo data
+                if (confirm('Desktop detected.\n\nChoose photo file? (Cancel = demo data)')) {
+                    document.getElementById('scanInput').click();
+                } else {
+                    simulateScan();
+                }
             }
         }
 
@@ -3096,276 +3126,190 @@
             if (el) el.style.display = 'none';
         }
 
-        // --- Handle photo from camera ---
+        // --- Handle photo from camera (Gemini AI) ---
         async function handleScanFile(input) {
             if (!input.files || !input.files[0]) return;
             const file = input.files[0];
             input.value = ''; // Clear for next scan
 
+            let apiKey = getGeminiApiKey();
+            if (!apiKey) {
+                apiKey = promptForApiKey();
+                if (!apiKey) return;
+            }
+
             showScanOverlay('Preparing image...');
 
             try {
-                // Step 1: Load image
-                const img = await loadImage(file);
-                updateScanOverlay('Optimising for OCR...');
+                // Convert image to base64
+                const base64 = await fileToBase64(file);
+                updateScanOverlay('Sending to Gemini AI...\nThis takes 5-10 seconds.');
 
-                // Step 2: Preprocess - resize, grayscale, contrast boost
-                const processedDataUrl = preprocessImage(img);
-                console.log('Image preprocessed. Original:', img.width + 'x' + img.height);
-
-                // Step 3: Run Tesseract OCR on preprocessed image
-                updateScanOverlay('Reading order form...\nThis may take 15-30 seconds.');
-
-                const result = await Tesseract.recognize(
-                    processedDataUrl,
-                    'eng',
-                    {
-                        logger: m => {
-                            if (m.status === 'recognizing text') {
-                                const pct = Math.round((m.progress || 0) * 100);
-                                updateScanOverlay('Reading text... ' + pct + '%');
-                            }
-                        }
-                    }
-                );
-
-                const text = result.data.text;
+                // Call Gemini API
+                const extractedData = await callGeminiVision(apiKey, base64, file.type || 'image/jpeg');
                 hideScanOverlay();
-                console.log('OCR Raw Text:', text);
 
-                if (!text || text.trim().length < 20) {
-                    if (confirm('Could not read text from this image.\nTry a clearer, well-lit photo.\n\nLoad demo data instead?')) {
+                console.log('Gemini extracted:', extractedData);
+
+                if (!extractedData || Object.keys(extractedData).length === 0) {
+                    if (confirm('Could not extract data from this image.\nTry a clearer photo.\n\nLoad demo data instead?')) {
                         simulateScan();
                     }
                     return;
                 }
 
-                // Parse the Westral order form
-                const parsed = parseWestralOrder(text);
-                // Show review screen
-                showScanReview(parsed, text);
+                // Convert Gemini response to our review format
+                const parsed = {
+                    name: extractedData.clientName || '',
+                    address: extractedData.address || '',
+                    phone: extractedData.contactNumber || '',
+                    email: extractedData.email || '',
+                    quoteRef: extractedData.id || '',
+                    rooms: [],
+                    product: '',
+                    blade: '',
+                    color: ''
+                };
+
+                // Map measurements to rooms
+                if (Array.isArray(extractedData.measurements)) {
+                    parsed.rooms = extractedData.measurements.map(m => ({
+                        name: m.room || '',
+                        width: parseInt(m.width) || 0,
+                        drop: parseInt(m.height) || 0,
+                        product: m.productLine || 'Woodlore'
+                    }));
+                }
+
+                // Show review screen with raw JSON for debugging
+                const rawText = JSON.stringify(extractedData, null, 2);
+                showScanReview(parsed, rawText);
 
             } catch (err) {
                 hideScanOverlay();
-                console.error('OCR error:', err);
-                if (confirm('OCR failed: ' + err.message + '\n\nLoad demo data instead?')) {
+                console.error('Gemini scan error:', err);
+
+                if (err.message && err.message.includes('API key')) {
+                    alert('Invalid API key. Please try again.');
+                    localStorage.removeItem(GEMINI_KEY_STORAGE);
+                    return;
+                }
+
+                if (confirm('Scan failed: ' + (err.message || 'Unknown error') + '\n\nLoad demo data instead?')) {
                     simulateScan();
                 }
             }
         }
 
-        // Load image from file into an HTMLImageElement
-        function loadImage(file) {
+        // Convert file to base64 string (without data URL prefix)
+        function fileToBase64(file) {
             return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = () => resolve(img);
-                img.onerror = () => reject(new Error('Could not load image'));
-                img.src = URL.createObjectURL(file);
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const result = reader.result;
+                    // Strip the data URL prefix to get pure base64
+                    const base64 = result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = () => reject(new Error('Could not read file'));
+                reader.readAsDataURL(file);
             });
         }
 
-        // Preprocess image for OCR: resize, grayscale, high contrast
-        function preprocessImage(img) {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
+        // Call Google Gemini 2.5 Flash Vision API
+        async function callGeminiVision(apiKey, base64Image, mimeType) {
+            const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=' + apiKey;
 
-            // Resize to max 1500px on longest side (iPad photos are 4000+ px)
-            const MAX_SIZE = 1500;
-            let w = img.width, h = img.height;
-            if (w > MAX_SIZE || h > MAX_SIZE) {
-                const scale = MAX_SIZE / Math.max(w, h);
-                w = Math.round(w * scale);
-                h = Math.round(h * scale);
-            }
-            canvas.width = w;
-            canvas.height = h;
+            const requestBody = {
+                contents: [{
+                    parts: [
+                        {
+                            inlineData: {
+                                mimeType: mimeType,
+                                data: base64Image
+                            }
+                        },
+                        {
+                            text: `Analyze this image of a window furnishing order form or invoice.
 
-            // Draw resized image
-            ctx.drawImage(img, 0, 0, w, h);
+Extract the following structured data:
+1. **Job Details**: Reference number (as "id"), Client Name (as "clientName"), Address (as "address"), Contact number (as "contactNumber"), Email (as "email"), Surveyor name (as "surveyor").
+2. **Instructions**: Look for "Notes", "Comments", or "Special Instructions" (as "comments").
+3. **Measurements**: Look for a table or grid containing window specifications.
+   - For each row, extract: Room name (as "room"), Width (as "width"), Height/Drop (as "height"), Panel Quantity (as "panelQty"), Product Line e.g. Woodlore, Normandy (as "productLine"), Frame type (as "frame"), Mount type (as "mount"), Color (as "color"), and Blade Size (as "blade").
+   - Width is typically the first dimension, Height/Drop the second.
+   - Convert all dimensions to clean numbers in mm (remove 'mm' suffix).
+   - If a field is blank or illegible, return an empty string.
 
-            // Get pixel data for grayscale + contrast processing
-            const imageData = ctx.getImageData(0, 0, w, h);
-            const data = imageData.data;
+Return the result as valid JSON matching this exact structure:
+{
+  "id": "string",
+  "clientName": "string",
+  "address": "string",
+  "contactNumber": "string",
+  "email": "string",
+  "surveyor": "string",
+  "comments": "string",
+  "measurements": [
+    {
+      "room": "string",
+      "width": "string",
+      "height": "string",
+      "panelQty": "string",
+      "productLine": "string",
+      "frame": "string",
+      "mount": "string",
+      "color": "string",
+      "blade": "string"
+    }
+  ]
+}
 
-            // Convert to grayscale and apply contrast enhancement
-            for (let i = 0; i < data.length; i += 4) {
-                // Luminance grayscale
-                let gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-
-                // Contrast boost: stretch histogram (make darks darker, lights lighter)
-                // Simple contrast curve: ((gray/255 - 0.5) * contrast + 0.5) * 255
-                const contrast = 1.8; // Strong contrast boost
-                gray = ((gray / 255 - 0.5) * contrast + 0.5) * 255;
-                gray = Math.max(0, Math.min(255, gray));
-
-                // Threshold: push towards black or white for cleaner text
-                gray = gray < 140 ? 0 : 255;
-
-                data[i] = gray;     // R
-                data[i + 1] = gray; // G
-                data[i + 2] = gray; // B
-                // Alpha stays the same
-            }
-
-            ctx.putImageData(imageData, 0, 0);
-
-            // Return as JPEG data URL (smaller than PNG, good enough for OCR)
-            return canvas.toDataURL('image/jpeg', 0.95);
-        }
-
-        // --- Parse Westral Installation Order Form ---
-        function parseWestralOrder(text) {
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 1);
-            const result = {
-                name: '',
-                address: '',
-                phone: '',
-                email: '',
-                quoteRef: '',
-                rooms: [],
-                product: '',
-                blade: '',
-                color: '',
-                rawText: text
+Return ONLY the JSON, no markdown fences or extra text.`
+                        }
+                    ]
+                }],
+                generationConfig: {
+                    responseMimeType: 'application/json',
+                    temperature: 0.1
+                }
             };
 
-            const fullText = text.replace(/\n/g, ' ');
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
 
-            // --- Customer Name ---
-            // Look for MR/MRS/MS/MISS/DR patterns
-            for (const line of lines) {
-                const titleMatch = line.match(/\b(MRS?|MS|MISS|DR)\.?\s+([A-Z][A-Z\s'.,-]{2,40})/i);
-                if (titleMatch) {
-                    let name = titleMatch[0].trim();
-                    // Clean up: remove trailing numbers, form field words, stray punctuation
-                    name = name.replace(/\s+(Quote|Map|Request|Ref|Installer|Amount|Date|Contact|Instructions|Client|Fit)\b.*/i, '');
-                    name = name.replace(/\s*\d+\s*$/, '').replace(/\s{2,}/g, ' ').trim();
-                    if (name.length > 4) {
-                        result.name = name;
-                        break;
-                    }
+            if (!response.ok) {
+                const errBody = await response.text();
+                console.error('Gemini API error:', response.status, errBody);
+                if (response.status === 400 || response.status === 403) {
+                    throw new Error('API key invalid or expired. Get a new one at aistudio.google.com/apikey');
                 }
+                throw new Error('Gemini API error (HTTP ' + response.status + ')');
             }
 
-            // --- Address ---
-            // Look for Australian address pattern: number + street + suburb + postcode
-            for (const line of lines) {
-                // Match: number/unit + street name + 4-digit postcode nearby
-                const addrMatch = line.match(/\d+[\/\w]*\s+[A-Z][A-Za-z\s]+(?:DRIVE|DR|STREET|ST|ROAD|RD|AVENUE|AVE|CRESCENT|CRES|PLACE|PL|COURT|CT|WAY|LANE|LN|TERRACE|TCE|PARADE|PDE|CLOSE|CL|CIRCUIT|CCT|BOULEVARD|BLVD)[,\s]+[A-Z\s]+\d{4}/i);
-                if (addrMatch) {
-                    result.address = addrMatch[0].replace(/\s{2,}/g, ' ').trim();
-                    break;
+            const data = await response.json();
+
+            // Extract text from Gemini response
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!text) {
+                throw new Error('Empty response from Gemini');
+            }
+
+            // Parse JSON - Gemini should return clean JSON with responseMimeType set
+            try {
+                return JSON.parse(text);
+            } catch (parseErr) {
+                // Try to extract JSON from markdown fences if present
+                const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+                if (jsonMatch) {
+                    return JSON.parse(jsonMatch[1]);
                 }
+                console.error('Could not parse Gemini response:', text);
+                throw new Error('Could not parse AI response');
             }
-            // Fallback: look for "FIT AT:" prefix
-            if (!result.address) {
-                const fitAt = fullText.match(/FIT\s*AT[:\s]+(.+?\d{4})/i);
-                if (fitAt) {
-                    result.address = fitAt[1].replace(/\s{2,}/g, ' ').trim();
-                }
-            }
-
-            // --- Phone ---
-            // Australian phone: 04xx xxx xxx or 08 xxxx xxxx or landline
-            for (const line of lines) {
-                const phoneMatch = line.match(/(?:Contact\s*Numbers?[:\s]*)?(\b0[234578]\d{2}[\s.-]?\d{3}[\s.-]?\d{3}\b)/i);
-                if (phoneMatch) {
-                    result.phone = phoneMatch[1].replace(/[^0-9]/g, '');
-                    // Format nicely
-                    if (result.phone.length === 10) {
-                        result.phone = result.phone.replace(/(\d{4})(\d{3})(\d{3})/, '$1 $2 $3');
-                    }
-                    break;
-                }
-            }
-
-            // --- Quote/Reference Number ---
-            const quoteMatch = fullText.match(/(?:Quote|Ref|Reference)[:\s#]*(\d[\d\s.-]{4,15})/i);
-            if (quoteMatch) {
-                result.quoteRef = quoteMatch[1].replace(/\s+/g, '').trim();
-            }
-
-            // --- Email ---
-            const emailMatch = fullText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-            if (emailMatch) {
-                result.email = emailMatch[0];
-            }
-
-            // --- Rooms from line items table ---
-            // Pattern: line number (3 digits) + location name + qty + width + drop
-            // Example: "948 WC 1 560 1460" or "950 Bed1 1 1770 1460"
-            const roomPattern = /\b(\d{2,4})\s+([A-Za-z][A-Za-z0-9\s\/]{1,20}?)\s+(\d)\s+(\d{3,4})\s+(\d{3,4})\b/g;
-            let match;
-            const seenRooms = new Set();
-            while ((match = roomPattern.exec(text)) !== null) {
-                let locName = match[2].trim();
-                // Skip header rows or non-room text
-                if (/^(Line|Loc|Qty|Width|Drop|Product|No|Total|Check|Std|Extra)/i.test(locName)) continue;
-                if (seenRooms.has(locName.toLowerCase())) continue;
-                seenRooms.add(locName.toLowerCase());
-
-                const width = parseInt(match[4]);
-                const drop = parseInt(match[5]);
-
-                // Determine product from the surrounding text
-                let product = 'Woodlore'; // default
-                const lineStart = Math.max(0, text.lastIndexOf('\n', match.index));
-                const lineEnd = text.indexOf('\n', match.index + match[0].length);
-                const fullLine = text.substring(lineStart, lineEnd > 0 ? lineEnd : match.index + 200);
-
-                if (/waterproof|woodlore\s*plus/i.test(fullLine)) {
-                    product = 'Woodlore Plus';
-                } else if (/brightwood/i.test(fullLine)) {
-                    product = 'Brightwood';
-                } else if (/normandy/i.test(fullLine)) {
-                    product = 'Normandy';
-                }
-
-                result.rooms.push({
-                    name: locName,
-                    width: width,
-                    drop: drop,
-                    product: product
-                });
-            }
-
-            // --- Fallback room detection: just look for common room names ---
-            if (result.rooms.length === 0) {
-                const roomNames = ['WC', 'Bathroom', 'Bath', 'Ensuite', 'Bed1', 'Bed2', 'Bed3', 'Bed 1', 'Bed 2', 'Bed 3',
-                    'Bedroom', 'Master', 'Kitchen', 'Lounge', 'Living', 'Dining', 'Meals', 'Study', 'Office', 'Laundry',
-                    'Family', 'Theatre', 'Rumpus', 'Sunroom', 'Nursery', 'Guest'];
-                for (const rn of roomNames) {
-                    const rx = new RegExp('\\b' + rn + '\\b', 'i');
-                    if (rx.test(text) && !seenRooms.has(rn.toLowerCase())) {
-                        seenRooms.add(rn.toLowerCase());
-                        result.rooms.push({ name: rn, width: 0, drop: 0, product: 'Woodlore' });
-                    }
-                }
-            }
-
-            // --- Product (project-level default) ---
-            if (/woodlore\s*plus|waterproof\s*woodlore/i.test(fullText)) {
-                result.product = 'Woodlore Plus';
-            } else if (/brightwood/i.test(fullText)) {
-                result.product = 'Brightwood';
-            } else if (/normandy/i.test(fullText)) {
-                result.product = 'Normandy';
-            } else if (/woodlore/i.test(fullText)) {
-                result.product = 'Woodlore';
-            }
-
-            // --- Blade size ---
-            const bladeMatch = fullText.match(/(\d{2,3})\s*mm\s*Louvres?/i);
-            if (bladeMatch) {
-                result.blade = bladeMatch[1] + 'mm';
-            }
-
-            // --- Color ---
-            if (/pure\s*white/i.test(fullText)) result.color = '001 Pure White';
-            else if (/bright\s*white/i.test(fullText)) result.color = '003 Bright White';
-            else if (/silk\s*white/i.test(fullText)) result.color = '004 Silk White';
-
-            return result;
         }
 
         // --- Scan Review Modal ---
