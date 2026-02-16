@@ -542,7 +542,9 @@
                 <input type="text" id="clientName" placeholder="Client Name" onfocus="verify(this)">
                 <input type="text" id="clientAddr" placeholder="Installation Address" onfocus="verify(this)">
                 <input type="tel" id="clientPhone" placeholder="Contact" onfocus="verify(this)">
-                <input type="email" id="clientEmail" placeholder="Email" onfocus="verify(this)">
+                <input type="email" id="clientEmail" placeholder="Client Email" onfocus="verify(this)">
+                <input type="email" id="consultantEmail" placeholder="Consultant Email (@westral.com.au)"
+                    onfocus="verify(this)">
             </div>
 
             <div class="card">
@@ -2411,6 +2413,8 @@
                     <div><strong>Phone:</strong> <span id="ssClientPhone">-</span> &nbsp; <strong>Email:</strong> <span
                             id="ssClientEmail">-</span></div>
                     <div><strong>Date:</strong> <span id="ssJobDate">-</span></div>
+                    <div style="grid-column: 1 / -1;"><strong>Consultant:</strong> <span id="ssConsultant">-</span>
+                    </div>
                 </div>
 
                 <!-- Single Scrollable Order Sheet -->
@@ -2522,6 +2526,27 @@
                 </svg>
                 SUBMIT ORDER
             </button>
+
+            <div style="display:flex; gap:10px; margin-top:12px;">
+                <button class="btn btn-outline" onclick="pleaseQuote()"
+                    style="flex:1; border-color:#ff9800; color:#ff9800;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                    </svg>
+                    PLEASE QUOTE
+                </button>
+                <button class="btn btn-outline" onclick="sendQuote()"
+                    style="flex:1; border-color:#2196f3; color:#2196f3;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                        <polyline points="22,6 12,13 2,6" />
+                    </svg>
+                    SEND QUOTE
+                </button>
+            </div>
         </div>
 
         <!-- ==================== INSTALL TAB ==================== -->
@@ -3130,32 +3155,8 @@
                     return;
                 }
 
-                // Convert Gemini response to our review format
-                const parsed = {
-                    name: extractedData.clientName || '',
-                    address: extractedData.address || '',
-                    phone: extractedData.contactNumber || '',
-                    email: extractedData.email || '',
-                    quoteRef: extractedData.id || '',
-                    rooms: [],
-                    product: '',
-                    blade: '',
-                    color: ''
-                };
-
-                // Map measurements to rooms
-                if (Array.isArray(extractedData.measurements)) {
-                    parsed.rooms = extractedData.measurements.map(m => ({
-                        name: m.room || '',
-                        width: parseInt(m.width) || 0,
-                        drop: parseInt(m.height) || 0,
-                        product: m.productLine || 'Woodlore'
-                    }));
-                }
-
-                // Show review screen with raw JSON for debugging
-                const rawText = JSON.stringify(extractedData, null, 2);
-                showScanReview(parsed, rawText);
+                // Apply extracted data directly to form fields (all as blue/scanned)
+                applyScanData(extractedData);
 
             } catch (err) {
                 hideScanOverlay();
@@ -3170,6 +3171,115 @@
                     simulateScan();
                 }
             }
+        }
+
+        // Apply scanned data directly to all relevant fields as blue text
+        function applyScanData(data) {
+            let summary = [];
+
+            // --- PROJECT PAGE: Customer Details ---
+            if (data.clientName) { fillScanned('clientName', data.clientName); summary.push('✓ Customer: ' + data.clientName); }
+            if (data.address) { fillScanned('clientAddr', data.address); summary.push('✓ Address'); }
+            if (data.contactNumber) { fillScanned('clientPhone', data.contactNumber); summary.push('✓ Phone'); }
+            if (data.email) { fillScanned('clientEmail', data.email); }
+            if (data.id) { fillScanned('jobRef', data.id); summary.push('✓ Quote Ref: ' + data.id); }
+            if (data.comments) { fillScanned('jobComments', data.comments); }
+
+            // --- PROJECT PAGE: Consultant Email ---
+            if (data.consultantEmail) {
+                fillScanned('consultantEmail', data.consultantEmail);
+                summary.push('✓ Consultant: ' + data.consultantEmail);
+            }
+
+            // --- PROJECT PAGE: Product Choices (set as scanned/blue) ---
+            if (data.measurements && data.measurements.length > 0) {
+                const first = data.measurements[0]; // Use first room's specs as project defaults
+
+                if (first.productLine) { fillScannedSelect('specProduct', first.productLine); }
+                if (first.blade) { fillScannedSelect('specBlade', first.blade); }
+                if (first.color) { fillScannedSelect('specColor', first.color); }
+                if (first.mountingMethod) { fillScannedSelect('specMountMethod', first.mountingMethod); }
+                if (first.hingeColour) { fillScannedSelect('specHinge', first.hingeColour); }
+            }
+
+            // --- SURVEY PAGE: Create room tabs (qty > 1 = multiple tabs) ---
+            if (Array.isArray(data.measurements) && data.measurements.length > 0) {
+                const rooms = [];
+                data.measurements.forEach(m => {
+                    const qty = parseInt(m.qty) || 1;
+                    const roomName = m.room || 'Room';
+                    const width = parseInt(m.width) || 0;
+                    const drop = parseInt(m.height) || 0;
+                    const product = m.productLine || document.getElementById('specProduct').value || 'Woodlore';
+
+                    if (qty > 1) {
+                        // Create multiple tabs: "Dining 1", "Dining 2", etc.
+                        for (let i = 1; i <= qty; i++) {
+                            rooms.push({
+                                name: roomName + ' ' + i,
+                                width: width,
+                                drop: drop,
+                                product: product,
+                                scannedData: m
+                            });
+                        }
+                    } else {
+                        rooms.push({
+                            name: roomName,
+                            width: width,
+                            drop: drop,
+                            product: product,
+                            scannedData: m
+                        });
+                    }
+                });
+
+                const defaultProduct = document.getElementById('specProduct').value || 'Woodlore';
+                state.rooms = rooms.map(r => ({
+                    name: r.name,
+                    posts: [], dividers: [], packers: [], drawings: [],
+                    frame: { top: 'YES', left: 'YES', right: 'YES', bottom: 'YES' },
+                    specs: { product: r.product || defaultProduct },
+                    product: r.product || defaultProduct,
+                    scannedOverrides: {},
+                    scannedWidth: r.width,
+                    scannedDrop: r.drop
+                }));
+                state.currentRoom = 0;
+                renderRoomTabs();
+                loadRoomData(0);
+                summary.push('✓ ' + rooms.length + ' room tab(s) created');
+            }
+
+            alert('Scan Applied! ✓\n\n' + summary.join('\n') +
+                '\n\nTap any BLUE field to verify it (turns black).');
+        }
+
+        // Fill a select element with scanned value (fuzzy match)
+        function fillScannedSelect(id, value) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const val = value.toString().toLowerCase().trim();
+
+            // Try exact match first
+            for (const opt of el.options) {
+                if (opt.value.toLowerCase() === val || opt.text.toLowerCase() === val) {
+                    el.value = opt.value;
+                    el.classList.add('scanned');
+                    return;
+                }
+            }
+            // Try partial match
+            for (const opt of el.options) {
+                if (opt.value.toLowerCase().includes(val) || val.includes(opt.value.toLowerCase()) ||
+                    opt.text.toLowerCase().includes(val) || val.includes(opt.text.toLowerCase())) {
+                    el.value = opt.value;
+                    el.classList.add('scanned');
+                    return;
+                }
+            }
+            // No match - still mark as scanned with closest guess
+            el.classList.add('scanned');
         }
 
         // Convert file to base64 string (without data URL prefix)
@@ -3201,37 +3311,58 @@
                             }
                         },
                         {
-                            text: `Analyze this image of a window furnishing order form or invoice.
+                            text: `Analyze this image of a Westral window furnishing order form.
 
-Extract the following structured data:
-1. **Job Details**: Reference number (as "id"), Client Name (as "clientName"), Address (as "address"), Contact number (as "contactNumber"), Email (as "email"), Surveyor name (as "surveyor").
-2. **Instructions**: Look for "Notes", "Comments", or "Special Instructions" (as "comments").
-3. **Measurements**: Look for a table or grid containing window specifications.
-   - For each row, extract: Room name (as "room"), Width (as "width"), Height/Drop (as "height"), Panel Quantity (as "panelQty"), Product Line e.g. Woodlore, Normandy (as "productLine"), Frame type (as "frame"), Mount type (as "mount"), Color (as "color"), and Blade Size (as "blade").
-   - Width is typically the first dimension, Height/Drop the second.
-   - Convert all dimensions to clean numbers in mm (remove 'mm' suffix).
-   - If a field is blank or illegible, return an empty string.
+Extract ALL data into structured JSON. This form has two possible page types:
 
-Return the result as valid JSON matching this exact structure:
+**PAGE 1 - Installation Copy** (has "Installation" header):
+- Client Name, Address, Contact Numbers, Email
+- Quote/Reference number (top right)
+- Instructions / "FIT AT" / "Client to Remove Fittings" → as "comments"
+- Consultant name, phone, and email at the bottom (format: Name / Phone / email@westral.com.au)
+- Line item table with: Line No, Location/Room, Qty, Width, Drop, Product, Specifications
+
+**PAGE 2 - Check Measure Copy** (has "Installer to Check Measure" header):
+- Customer name, Consultant info, Instructions
+- Detailed table with: Line No, Qty, Location, Width, Drop, In/Out, Panel Qty, Blade Size, Material, Colour, Divider Height, Layout Code, Mounting Method, Hinge Colour, Frame details
+
+**IMPORTANT extraction rules:**
+- The consultant email will be in format "name@westral.com.au" or "firstname.lastname@westral.com.au"
+- For Qty: if a line item has qty=2, report that qty so the app can create 2 separate tabs
+- Width and Height/Drop should be clean numbers in mm
+- For Product/Material: look for "Woodlore", "Woodlore Plus", "Brightwood", "Normandy"
+- For Blade: extract as "47mm", "63mm", "76mm", "89mm", or "114mm"
+- For Colour: extract full colour name like "Silk White", "Pure White"
+- For Mounting Method: "Hinged", "Track", or "Bi-fold"
+- For Hinge Colour: "Silk White", "Pure White", "Stainless Steel", etc.
+- If a field is blank or illegible, return empty string ""
+
+Return valid JSON matching this exact structure:
 {
   "id": "string",
   "clientName": "string",
   "address": "string",
   "contactNumber": "string",
   "email": "string",
-  "surveyor": "string",
+  "consultantName": "string",
+  "consultantPhone": "string",
+  "consultantEmail": "string",
   "comments": "string",
   "measurements": [
     {
+      "lineNo": "string",
       "room": "string",
+      "qty": "string",
       "width": "string",
       "height": "string",
       "panelQty": "string",
       "productLine": "string",
-      "frame": "string",
-      "mount": "string",
+      "blade": "string",
       "color": "string",
-      "blade": "string"
+      "mountingMethod": "string",
+      "hingeColour": "string",
+      "mount": "string",
+      "frame": "string"
     }
   ]
 }
@@ -3283,155 +3414,13 @@ Return ONLY the JSON, no markdown fences or extra text.`
             }
         }
 
-        // --- Scan Review Modal ---
-        function showScanReview(parsed, rawText) {
-            let modal = document.getElementById('scanReviewModal');
-            if (modal) modal.remove();
-
-            modal = document.createElement('div');
-            modal.id = 'scanReviewModal';
-            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:9500;display:flex;flex-direction:column;overflow:auto;';
-
-            const roomRows = parsed.rooms.map((r, i) =>
-                `<tr>
-                    <td><input type="text" id="sr_room_${i}" value="${r.name}" style="width:100%;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:14px;"></td>
-                    <td><input type="number" id="sr_w_${i}" value="${r.width || ''}" style="width:70px;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:14px;text-align:center;" placeholder="W"></td>
-                    <td><input type="number" id="sr_d_${i}" value="${r.drop || ''}" style="width:70px;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:14px;text-align:center;" placeholder="D"></td>
-                    <td style="text-align:center;"><button onclick="this.closest('tr').remove()" style="background:#dc3545;color:white;border:none;border-radius:4px;padding:4px 10px;font-size:13px;">✕</button></td>
-                </tr>`
-            ).join('');
-
-            modal.innerHTML = `
-                <div style="max-width:500px;margin:auto;padding:20px;width:100%;">
-                    <h2 style="color:white;text-align:center;margin-bottom:16px;">📋 Scan Results — Review & Edit</h2>
-
-                    <div style="background:white;border-radius:12px;padding:16px;margin-bottom:12px;">
-                        <h3 style="margin:0 0 10px 0;color:#333;font-size:15px;">Customer Details</h3>
-                        <label style="font-size:12px;color:#666;font-weight:600;">Name</label>
-                        <input type="text" id="sr_name" value="${parsed.name}" placeholder="Not detected" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:15px;margin-bottom:8px;box-sizing:border-box;">
-                        <label style="font-size:12px;color:#666;font-weight:600;">Address</label>
-                        <input type="text" id="sr_addr" value="${parsed.address}" placeholder="Not detected" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:15px;margin-bottom:8px;box-sizing:border-box;">
-                        <label style="font-size:12px;color:#666;font-weight:600;">Phone</label>
-                        <input type="tel" id="sr_phone" value="${parsed.phone}" placeholder="Not detected" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:15px;margin-bottom:8px;box-sizing:border-box;">
-                        <label style="font-size:12px;color:#666;font-weight:600;">Email</label>
-                        <input type="email" id="sr_email" value="${parsed.email}" placeholder="Not detected" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:15px;margin-bottom:8px;box-sizing:border-box;">
-                        <label style="font-size:12px;color:#666;font-weight:600;">Quote / Ref #</label>
-                        <input type="text" id="sr_ref" value="${parsed.quoteRef}" placeholder="Not detected" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:15px;box-sizing:border-box;">
-                    </div>
-
-                    <div style="background:white;border-radius:12px;padding:16px;margin-bottom:12px;">
-                        <h3 style="margin:0 0 10px 0;color:#333;font-size:15px;">Rooms Found (${parsed.rooms.length})</h3>
-                        <table style="width:100%;border-collapse:collapse;" id="sr_roomTable">
-                            <thead><tr style="font-size:12px;color:#666;">
-                                <th style="text-align:left;padding:4px;">Room</th>
-                                <th style="text-align:left;padding:4px;">W (mm)</th>
-                                <th style="text-align:left;padding:4px;">D (mm)</th>
-                                <th></th>
-                            </tr></thead>
-                            <tbody>${roomRows || '<tr><td colspan="4" style="color:#999;padding:8px;text-align:center;">No rooms detected</td></tr>'}</tbody>
-                        </table>
-                        <button onclick="addReviewRoom()" style="margin-top:8px;background:#28a745;color:white;border:none;border-radius:6px;padding:8px 16px;font-size:13px;width:100%;">+ Add Room</button>
-                    </div>
-
-                    <div style="display:flex;gap:10px;margin-top:16px;">
-                        <button onclick="document.getElementById('scanReviewModal').remove()" style="flex:1;background:#6c757d;color:white;border:none;border-radius:8px;padding:14px;font-size:16px;font-weight:600;">Cancel</button>
-                        <button onclick="applyScanFromReview()" style="flex:2;background:#007bff;color:white;border:none;border-radius:8px;padding:14px;font-size:16px;font-weight:600;">✓ Apply to Form</button>
-                    </div>
-
-                    <details style="margin-top:16px;">
-                        <summary style="color:#aaa;font-size:12px;cursor:pointer;">Show raw OCR text</summary>
-                        <pre style="color:#888;font-size:11px;white-space:pre-wrap;background:#1a1a1a;padding:10px;border-radius:6px;max-height:200px;overflow:auto;margin-top:8px;">${rawText.replace(/</g, '&lt;')}</pre>
-                    </details>
-                </div>
-            `;
-            document.body.appendChild(modal);
-        }
-
-        // Add a blank room row in the review modal
-        function addReviewRoom() {
-            const tbody = document.querySelector('#sr_roomTable tbody');
-            const noRooms = tbody.querySelector('td[colspan]');
-            if (noRooms) noRooms.closest('tr').remove();
-            const idx = tbody.children.length;
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><input type="text" id="sr_room_${idx}" value="" style="width:100%;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:14px;" placeholder="Room name"></td>
-                <td><input type="number" id="sr_w_${idx}" value="" style="width:70px;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:14px;text-align:center;" placeholder="W"></td>
-                <td><input type="number" id="sr_d_${idx}" value="" style="width:70px;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:14px;text-align:center;" placeholder="D"></td>
-                <td style="text-align:center;"><button onclick="this.closest('tr').remove()" style="background:#dc3545;color:white;border:none;border-radius:4px;padding:4px 10px;font-size:13px;">✕</button></td>
-            `;
-            tbody.appendChild(tr);
-        }
-
-        // Apply reviewed scan data to the form
-        function applyScanFromReview() {
-            const name = document.getElementById('sr_name').value.trim();
-            const addr = document.getElementById('sr_addr').value.trim();
-            const phone = document.getElementById('sr_phone').value.trim();
-            const email = document.getElementById('sr_email').value.trim();
-            const ref = document.getElementById('sr_ref').value.trim();
-
-            // Fill customer fields
-            if (name) fillScanned('clientName', name);
-            if (addr) fillScanned('clientAddr', addr);
-            if (phone) fillScanned('clientPhone', phone);
-            if (email) fillScanned('clientEmail', email);
-            if (ref) {
-                document.getElementById('jobRef').value = ref;
-                document.getElementById('jobRef').classList.add('scanned');
-            }
-
-            // Collect rooms from the review table
-            const tbody = document.querySelector('#sr_roomTable tbody');
-            const rows = tbody.querySelectorAll('tr');
-            const rooms = [];
-            rows.forEach((tr) => {
-                const nameInput = tr.querySelector('input[type="text"]');
-                const wInput = tr.querySelector('input[type="number"]');
-                if (nameInput && nameInput.value.trim()) {
-                    const allNums = tr.querySelectorAll('input[type="number"]');
-                    rooms.push({
-                        name: nameInput.value.trim(),
-                        width: allNums[0] ? parseInt(allNums[0].value) || 0 : 0,
-                        drop: allNums[1] ? parseInt(allNums[1].value) || 0 : 0
-                    });
-                }
-            });
-
-            // Create room tabs
-            if (rooms.length > 0) {
-                const defaultProduct = document.getElementById('specProduct').value || 'Woodlore';
-                state.rooms = rooms.map(r => ({
-                    name: r.name,
-                    posts: [], dividers: [], packers: [], drawings: [],
-                    frame: { top: 'YES', left: 'YES', right: 'YES', bottom: 'YES' },
-                    specs: { product: defaultProduct },
-                    product: defaultProduct,
-                    scannedOverrides: {}
-                }));
-                state.currentRoom = 0;
-                renderRoomTabs();
-                loadRoomData(0);
-            }
-
-            // Remove the review modal
-            document.getElementById('scanReviewModal').remove();
-
-            const roomCount = rooms.length;
-            alert('Scan Applied! ✓\n\n' +
-                (name ? '✓ Customer: ' + name + '\n' : '') +
-                (addr ? '✓ Address found\n' : '') +
-                (phone ? '✓ Phone: ' + phone + '\n' : '') +
-                (roomCount ? '✓ ' + roomCount + ' room(s) created\n' : '') +
-                '\nTap any BLUE field to verify it (turns black).');
-        }
-
         // --- Demo/fallback simulation ---
         function simulateScan() {
             fillScanned('clientName', 'Mrs. Jane Smith');
             fillScanned('clientAddr', '24 Ocean View Drive, Cottesloe WA 6011');
             fillScanned('clientPhone', '0412 345 678');
             fillScanned('clientEmail', 'jane.smith@email.com');
+            fillScanned('consultantEmail', 'demo.consultant@westral.com.au');
 
             const defaultProduct = document.getElementById('specProduct').value || 'Woodlore';
             const makeRoom = (name, product) => ({
@@ -3852,7 +3841,7 @@ Return ONLY the JSON, no markdown fences or extra text.`
         function resetJob() {
             if (!confirm('Clear ALL job data? This cannot be undone.')) return;
 
-            ['clientName', 'clientAddr', 'clientPhone', 'clientEmail', 'jobRef', 'jobComments'].forEach(id => {
+            ['clientName', 'clientAddr', 'clientPhone', 'clientEmail', 'consultantEmail', 'jobRef', 'jobComments'].forEach(id => {
                 const el = document.getElementById(id);
                 el.value = '';
                 el.classList.remove('scanned');
@@ -4563,6 +4552,7 @@ Return ONLY the JSON, no markdown fences or extra text.`
             document.getElementById('ssJobRef').textContent = document.getElementById('jobRef').value || '-';
             document.getElementById('ssSurveyor').textContent = document.getElementById('surveyor')?.value || 'Surveyor';
             document.getElementById('ssJobDate').textContent = document.getElementById('jobDate').value || '-';
+            document.getElementById('ssConsultant').textContent = document.getElementById('consultantEmail')?.value || '-';
 
             // Get job-level specs (repeated per row)
             const product = document.getElementById('specProduct').value || '-';
@@ -4728,6 +4718,7 @@ Return ONLY the JSON, no markdown fences or extra text.`
                 address: document.getElementById('clientAddr').value,
                 email: document.getElementById('clientEmail')?.value || '',
                 phone: document.getElementById('clientPhone')?.value || '',
+                consultant: document.getElementById('consultantEmail')?.value || '',
                 surveyor: document.getElementById('surveyor')?.value || '',
                 date: document.getElementById('jobDate').value,
                 // Product specs
@@ -4805,6 +4796,46 @@ Return ONLY the JSON, no markdown fences or extra text.`
             }
 
             alert('Order Submitted!\n\n✓ Order placed in archive\n✓ CSV spreadsheet downloaded\n✓ Email to office opening...\n' + (clientEmail ? '✓ Client email will open next' : '⚠ No client email set') + '\n\n⚠ Remember to ATTACH the CSV file to the email!');
+        }
+
+        // ============ PLEASE QUOTE - Clear survey tabs, keep client & product data ============
+        function pleaseQuote() {
+            if (!confirm('Clear all survey room tabs?\nClient details & product choices will be kept.')) return;
+
+            state.rooms = [];
+            state.currentRoom = 0;
+            renderRoomTabs();
+
+            // Clear signatures
+            clearProjectSig();
+            clearSurveyorSig();
+
+            alert('Survey tabs cleared.\nClient details & product choices retained.\n\nReady for a fresh quote.');
+        }
+
+        // ============ SEND QUOTE - Email consultant with 'Please Quote [customer name]' ============
+        function sendQuote() {
+            const consultant = document.getElementById('consultantEmail')?.value;
+            const clientName = document.getElementById('clientName')?.value || 'Customer';
+            const jobRef = document.getElementById('jobRef')?.value || '';
+
+            if (!consultant) {
+                alert('No consultant email set.\nPlease enter a consultant email on the Project page first.');
+                return;
+            }
+
+            const subject = encodeURIComponent('Please Quote ' + clientName + (jobRef ? ' - Ref: ' + jobRef : ''));
+            const body = encodeURIComponent(
+                'Hi,\n\n' +
+                'Please quote for the following customer:\n\n' +
+                'Name: ' + clientName + '\n' +
+                'Address: ' + (document.getElementById('clientAddr')?.value || '-') + '\n' +
+                'Phone: ' + (document.getElementById('clientPhone')?.value || '-') + '\n' +
+                'Ref: ' + jobRef + '\n\n' +
+                'Thanks'
+            );
+
+            window.open('mailto:' + consultant + '?subject=' + subject + '&body=' + body, '_blank');
         }
 
         // Build a concise numbered room list for email
@@ -4968,6 +4999,7 @@ Return ONLY the JSON, no markdown fences or extra text.`
             if (document.getElementById('surveyor')) document.getElementById('surveyor').value = job.surveyor || '';
             document.getElementById('jobDate').value = job.date || '';
             document.getElementById('jobComments').value = job.comments || '';
+            if (document.getElementById('consultantEmail')) document.getElementById('consultantEmail').value = job.consultant || '';
 
             // Repopulate product specs
             document.getElementById('specProduct').value = job.product || 'Woodlore';
