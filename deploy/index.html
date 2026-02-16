@@ -524,8 +524,7 @@
             </div>
 
             <!-- Hidden file input for camera/gallery on iPad/mobile -->
-            <input type="file" id="scanInput" accept="image/*" capture="environment" style="display:none"
-                onchange="handleScanFile(this)">
+            <input type="file" id="scanInput" accept="image/*" style="display:none" onchange="handleScanFile(this)">
             <button class="btn btn-scan" onclick="triggerScan()" style="margin-bottom: 20px;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
@@ -1040,7 +1039,7 @@
                         Browse Files
                     </button>
                 </div>
-                <input type="file" id="drawingCapture" accept="image/*" capture="environment" style="display:none;"
+                <input type="file" id="drawingCapture" accept="image/*" style="display:none;"
                     onchange="handleDrawingFile(this)">
                 <input type="file" id="drawingBrowse" accept="image/*,.pdf" style="display:none;"
                     onchange="handleDrawingFile(this)">
@@ -2862,8 +2861,8 @@
                             Browse Files
                         </button>
                     </div>
-                    <input type="file" id="reportPhotoCapture" accept="image/*" capture="environment"
-                        style="display:none;" onchange="handleReportPhoto(this)">
+                    <input type="file" id="reportPhotoCapture" accept="image/*" style="display:none;"
+                        onchange="handleReportPhoto(this)">
                     <input type="file" id="reportPhotoBrowse" accept="image/*" style="display:none;"
                         onchange="handleReportPhoto(this)">
                     <div id="reportPhotoThumbs" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
@@ -4475,7 +4474,6 @@ Return ONLY the JSON, no markdown fences or extra text.`
                 input.id = 'roomPhotoInput';
                 input.type = 'file';
                 input.accept = 'image/*';
-                input.capture = 'environment';
                 input.style.display = 'none';
                 input.onchange = function (e) {
                     const file = e.target.files[0];
