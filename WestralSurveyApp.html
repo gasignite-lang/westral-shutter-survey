@@ -1067,8 +1067,12 @@
                     <!-- Photo area -->
                     <div class="frame-inner" id="photoArea" onclick="capturePhoto()">
                         <span id="photoPlaceholder">Tap to add photo</span>
-                        <img id="roomPhoto" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                        <img id="roomPhoto"
+                            style="width: 100%; height: 100%; object-fit: contain; display: none; background: #f0f0f0;">
                     </div>
+                </div>
+                <!-- Photo thumbnails -->
+                <div id="photoThumbs" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 0;">
                 </div>
             </div>
 
@@ -2523,6 +2527,7 @@
                                 <th style="width: 80px;">Layout</th>
                                 <th style="width: 80px;">Hinge Col</th>
                                 <th style="width: 60px;">Tilt</th>
+                                <th style="width: 50px;">Photo</th>
                             </tr>
                         </thead>
                         <tbody id="ssPanelRows"></tbody>
@@ -4345,6 +4350,7 @@ Return ONLY the JSON, no markdown fences or extra text.`
             current.frame = prev.frame ? JSON.parse(JSON.stringify(prev.frame)) : { top: 'YES', left: 'YES', right: 'YES', bottom: 'YES' };
             current.specs = prev.specs ? JSON.parse(JSON.stringify(prev.specs)) : { product: 'Woodlore' };
             current.specialty = prev.specialty ? JSON.parse(JSON.stringify(prev.specialty)) : { motorised: false };
+            current.photos = prev.photos ? [...prev.photos] : [];
 
             // Flag as NOT scanned (verified because it's a manual action)
             current.scannedWidth = false;
@@ -4379,7 +4385,8 @@ Return ONLY the JSON, no markdown fences or extra text.`
                 posts: [], dividers: [], packers: [],
                 frame: { top: 'YES', left: 'YES', right: 'YES', bottom: 'YES' },
                 specs: { product: currentProduct },
-                product: currentProduct // For tab label
+                product: currentProduct, // For tab label
+                photos: []
             });
             state.currentRoom = state.rooms.length - 1;
             loadRoomData(state.currentRoom);
@@ -4421,6 +4428,7 @@ Return ONLY the JSON, no markdown fences or extra text.`
                 blade: document.getElementById('roomBlade').value
             };
             r.drawings = [...roomDrawings];
+            r.photos = [...roomPhotos];
 
             // Backup entire job to LocalStorage
             persistActiveSession();
@@ -4461,6 +4469,9 @@ Return ONLY the JSON, no markdown fences or extra text.`
             updateMaxWidth();
             roomDrawings = r.drawings ? [...r.drawings] : [];
             renderDrawingThumbs();
+            roomPhotos = r.photos ? [...r.photos] : [];
+            displayHeroPhoto();
+            renderPhotoThumbs();
         }
 
         function loadRoomSpecs(specs) {
@@ -4753,11 +4764,10 @@ Return ONLY the JSON, no markdown fences or extra text.`
             }
         }
 
-        // Photo Capture
+        // ============ MULTI-PHOTO SYSTEM ============
+        let roomPhotos = [];
+
         function capturePhoto() {
-            // Use the hidden file input (scanInput logic but for photo)
-            // We'll reuse the scanInput or create a dedicated one. 
-            // Better to use a dedicated one to avoid confusion with scan.
             let input = document.getElementById('roomPhotoInput');
             if (!input) {
                 input = document.createElement('input');
@@ -4768,18 +4778,61 @@ Return ONLY the JSON, no markdown fences or extra text.`
                 input.onchange = function (e) {
                     const file = e.target.files[0];
                     if (!file) return;
+                    input.value = ''; // Clear for next capture
                     const reader = new FileReader();
                     reader.onload = function (ev) {
-                        const img = document.getElementById('roomPhoto');
-                        img.src = ev.target.result;
-                        img.style.display = 'block';
-                        document.getElementById('photoPlaceholder').style.display = 'none';
+                        roomPhotos.push(ev.target.result);
+                        displayHeroPhoto();
+                        renderPhotoThumbs();
                     };
                     reader.readAsDataURL(file);
                 };
                 document.body.appendChild(input);
             }
             input.click();
+        }
+
+        function displayHeroPhoto() {
+            const img = document.getElementById('roomPhoto');
+            const placeholder = document.getElementById('photoPlaceholder');
+            if (roomPhotos.length > 0) {
+                img.src = roomPhotos[0];
+                img.style.display = 'block';
+                placeholder.style.display = 'none';
+            } else {
+                img.src = '';
+                img.style.display = 'none';
+                placeholder.style.display = '';
+            }
+        }
+
+        function renderPhotoThumbs() {
+            const container = document.getElementById('photoThumbs');
+            if (roomPhotos.length <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            container.innerHTML = roomPhotos.map((src, i) =>
+                `<div style="position:relative; width:60px; height:60px; border-radius:6px; overflow:hidden; border:2px solid ${i === 0 ? 'var(--norman-blue)' : 'var(--border)'}; cursor:pointer; flex-shrink:0;">
+                    <img src="${src}" onclick="swapPhoto(${i})" style="width:100%; height:100%; object-fit:cover;">
+                    <div onclick="event.stopPropagation(); removePhoto(${i})" style="position:absolute; top:-2px; right:-2px; width:20px; height:20px; background:var(--danger); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; cursor:pointer; line-height:1;">✕</div>
+                    ${i === 0 ? '<div style="position:absolute; bottom:0; left:0; right:0; background:var(--norman-blue); color:white; font-size:8px; text-align:center; padding:1px;">MAIN</div>' : ''}
+                </div>`
+            ).join('');
+        }
+
+        function swapPhoto(idx) {
+            if (idx === 0 || idx >= roomPhotos.length) return;
+            // Swap with hero (index 0)
+            [roomPhotos[0], roomPhotos[idx]] = [roomPhotos[idx], roomPhotos[0]];
+            displayHeroPhoto();
+            renderPhotoThumbs();
+        }
+
+        function removePhoto(idx) {
+            roomPhotos.splice(idx, 1);
+            displayHeroPhoto();
+            renderPhotoThumbs();
         }
 
         // Save Room
@@ -5026,6 +5079,7 @@ Return ONLY the JSON, no markdown fences or extra text.`
                         <td>${layout}</td>
                         <td>${roomHinge}</td>
                         <td>${roomTilt}</td>
+                        <td>${(r.photos && r.photos.length > 0) ? '<img src="' + r.photos[0] + '" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">' : '-'}</td>
                     </tr>`;
 
                     // 2. FRAMING DETAILS
@@ -5665,7 +5719,7 @@ Return ONLY the JSON, no markdown fences or extra text.`
                         <td>${r.splitBlockOut || '-'}</td>
                         <td>${r.ringPull || '-'}</td>
                         <td>${r.handle || '-'}</td>
-                        <td>${r.picture ? '✓' : '-'}</td>
+                        <td>${(r.photos && r.photos.length > 0) ? '<img src="' + r.photos[0] + '" style="width:36px;height:36px;object-fit:cover;border-radius:3px;">' : '-'}</td>
                         <td>${r.flyscreenBeading || '-'}</td>
                         <td>${r.comments || '-'}</td>
                     </tr>`;
