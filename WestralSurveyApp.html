@@ -22,8 +22,11 @@
             --westral-green: #009a49;
             --westral-yellow: #fff200;
             --norman-blue: #0f1f40;
-            --bg-light: #f8f9fa;
-            --border: #dee2e6;
+            --bg-light: #f0f2f5;
+            --bg-card: #ffffff;
+            --input-bg: #f5f6fa;
+            --border: #c5cbd3;
+            --border-light: #dee2e6;
             --text-muted: #6c757d;
             --danger: #dc3545;
             --success: #28a745;
@@ -49,7 +52,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            background: white;
+            background: #eaecf0;
         }
 
         .view {
@@ -58,6 +61,7 @@
             padding: 16px;
             padding-bottom: 100px;
             display: none;
+            background: var(--bg-light);
         }
 
         .view.active {
@@ -79,10 +83,11 @@
             width: 100%;
             max-width: 500px;
             display: flex;
-            background: white;
-            border-top: 1px solid var(--border);
+            background: var(--bg-card);
+            border-top: 1.5px solid var(--border);
             padding-bottom: env(safe-area-inset-bottom);
             z-index: 100;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
         }
 
         .nav-btn {
@@ -135,12 +140,13 @@
         select,
         textarea {
             width: 100%;
-            border: 1px solid var(--border);
+            border: 1.5px solid var(--border);
             border-radius: 8px;
             padding: 12px;
             font-size: 16px;
             margin-bottom: 12px;
-            background: white;
+            background: var(--input-bg);
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
             -webkit-appearance: none;
             appearance: none;
         }
@@ -150,7 +156,8 @@
         textarea:focus {
             outline: none;
             border-color: var(--norman-blue);
-            box-shadow: 0 0 0 3px rgba(15, 31, 64, 0.1);
+            box-shadow: 0 0 0 3px rgba(15, 31, 64, 0.12), inset 0 1px 3px rgba(0, 0, 0, 0.06);
+            background: #ffffff;
         }
 
         select {
@@ -158,6 +165,7 @@
             background-repeat: no-repeat;
             background-position: right 12px center;
             padding-right: 36px;
+            background-color: var(--input-bg);
         }
 
         /* Scanned data = blue */
@@ -214,13 +222,29 @@
             color: var(--norman-blue);
         }
 
+        .btn-secondary {
+            background: var(--bg-card);
+            border: 1.5px solid var(--border);
+            color: var(--norman-blue);
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-secondary:active {
+            background: var(--bg-light);
+        }
+
         /* Cards */
         .card {
-            background: white;
-            border: 1px solid var(--border);
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
             border-radius: 12px;
             padding: 16px;
             margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
         }
 
         .card-title {
