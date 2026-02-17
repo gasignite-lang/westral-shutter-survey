@@ -675,6 +675,23 @@
                 <textarea id="jobComments" rows="3" placeholder="Enter any specific details..."></textarea>
             </div>
 
+            <!-- Settings: API Key (one-time setup) -->
+            <div class="card" style="border-left: 3px solid var(--westral-green);">
+                <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+                    </svg> AI Scan Key (One-Time Setup)</div>
+                <p style="font-size: 12px; color: var(--text-muted); margin: 0 0 8px;">
+                    Paste your Gemini API key below. It saves to <strong>this device only</strong> — you only need to do
+                    this once.
+                </p>
+                <input type="password" id="apiKeyInput" placeholder="Paste API key here..."
+                    style="font-size: 14px; letter-spacing: 1px; margin-bottom: 8px;"
+                    onchange="if(this.value && !this.value.startsWith('•')) { saveApiKey(this.value); this.value = '••••••••' + this.value.slice(-4); this.type='text'; }">
+                <button class="btn btn-outline"
+                    onclick="localStorage.removeItem('westral_gemini_key'); document.getElementById('apiKeyInput').value=''; document.getElementById('apiKeyInput').type='password'; document.getElementById('apiKeyInput').placeholder='Paste API key here...';"
+                    style="padding: 8px 14px; font-size: 12px; width: auto; display: inline-block;">Clear Key</button>
+            </div>
 
 
         </div>
@@ -3120,6 +3137,14 @@
 
             // Restore active session if any
             restoreActiveSession();
+
+            // Show saved API key (masked) if present
+            const savedKey = getApiKey();
+            if (savedKey) {
+                const el = document.getElementById('apiKeyInput');
+                el.value = '••••••••' + savedKey.slice(-4);
+                el.type = 'text';
+            }
         }
 
         function persistActiveSession() {
@@ -3274,8 +3299,13 @@
             }).join('');
         }
 
-        // ============ SCAN FUNCTIONS (Gemini AI v3.0) ============
-        const GEMINI_API_KEY = 'AIzaSyBtd2Hr4pOSJSUV6OlzE6TrDW5A17V4yTU';
+        // API key stored securely in localStorage — never hardcoded
+        function getApiKey() {
+            return localStorage.getItem('westral_gemini_key') || '';
+        }
+        function saveApiKey(key) {
+            localStorage.setItem('westral_gemini_key', key.trim());
+        }
 
         function triggerScan() {
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -3319,7 +3349,17 @@
             const file = input.files[0];
             input.value = ''; // Clear for next scan
 
-            const apiKey = GEMINI_API_KEY;
+            let apiKey = getApiKey();
+
+            if (!apiKey) {
+                const key = prompt('Enter your Gemini API Key\n(Get one free at aistudio.google.com → Get API Key)\n\nYou only need to do this once — it saves to this device.');
+                if (!key) return;
+                saveApiKey(key);
+                apiKey = key.trim();
+                // Refresh the display field if visible
+                const el = document.getElementById('apiKeyInput');
+                if (el) el.value = '••••••••' + key.slice(-4);
+            }
 
             if (!navigator.onLine) {
                 alert('Internet Connection Required!\n\nYou need an active internet connection to use the AI scan feature. Please connect to WiFi or cellular data and try again.');
