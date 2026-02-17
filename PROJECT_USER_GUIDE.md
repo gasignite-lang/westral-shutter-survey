@@ -25,20 +25,26 @@ This app is designed to be a "Tank"—robust, offline-capable, and simple. The b
 *   **Client Details**: Enter the Name, Address, and Reference Number.
 *   **Product Selection**: Choose "Woodlore", "Woodlore Plus", etc.
 *   **Global Defaults**: Set the **Frame** and **Color** here. All new rooms will automatically copy these settings (saving you time!).
-*   **Load Template (Scan Order)**: Tap the **Scan/Camera** icon to instantly load data from an order form.
+*   **AI Data Extraction**: Tap the **Scan/Camera** icon to instantly load data from an order form.
+    *   **What it pulls**: Client Name, Address, Contact, Reference #, Product, Color, Blade, Mounting, and all Room measurements from the table.
+    *   **Verification (Blue-to-Black)**: Scanned data appears in **BLUE**.
+        *   **Tap once**: Verifies the data (turns it **BLACK**) and blocks the keyboard/dropdown so you can see the change.
+        *   **Tap twice**: Opens the keyboard or dropdown for manual editing.
+        *   *Why?* This ensures you double-check AI-extracted data before it becomes "final".
     *   **Tip: Offline Scanning**: The AI Scan requires internet. If you have no signal, take a photo of the form with your normal iPad camera app. Later, when you have WiFi, use the **"Photo Library"** option to scan that photo.
 
 ### Step 2: Surveying Rooms
 *   **Add Room**: Tap the `+` icon in the Room Tabs bar.
 *   **Measurements**: Enter W x H x D.
-    *   *Tip*: If the width is too wide for a single panel, the box will turn **RED** to warn you.
-*   **Frame Details**:
-    *   Tap the diagram edges (Top, Left, Right, Bottom) to toggle:
-        *   **YES (Green)**: Frame is present.
-        *   **CILL (Yellow)**: Sill cut.
-        *   **NO (Red)**: No frame.
-    *   Tap the center of the diagram to add a **Photo** of the window.
-*   **Validation**: The app checks your blade size vs. depth and will warn you if it won't fit.
+    *   **Over-Specification (Red Text)**: If you enter a width or height that exceeds the product's maximum (e.g., Woodlore single panel max), the text will turn **RED**.
+*   **Dynamic Buttons & Diagram**:
+    *   **Frame Edges**: Tap the diagram edges (Top, Left, Right, Bottom) to cycle through:
+        *   **YES (Green)**: Standard frame.
+        *   **CILL (Yellow)**: Sill cut-out.
+        *   **NO (Red)**: Frame removed.
+    *   **T-Post / Corner Color**: Tap the green **"T-Post"** button to toggle between specialized post types.
+    *   **Photo Area**: Tap the center of the diagram to add a **Photo** of the window.
+*   **Validation**: The app automatically checks your blade size vs. depth and will warn you if it won't fit.
 
 ### Step 3: Review & Sign
 *   Go to the **Review** tab to see the "Office Spreadsheet".
