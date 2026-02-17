@@ -803,7 +803,7 @@
                     <input type="number" id="panelQty" value="2" min="1" max="8" onclick="this.select()"
                         onchange="updateMaxWidth()">
                 </div>
-                <div>
+                <div style="grid-column: 1 / -1;">
                     <label class="label">Layout</label>
                     <input type="text" id="layout" placeholder="L R" style="text-transform: uppercase;"
                         oninput="this.value = this.value.toUpperCase()">
@@ -2409,51 +2409,117 @@
                     </div>
                 </div>
 
+                <!-- Install Time Dropdown -->
+                <div
+                    style="padding: 12px; background: #fffbe6; border-bottom: 2px solid var(--norman-blue); display: flex; align-items: center; gap: 12px;">
+                    <label style="font-weight: 700; color: #856404; font-size: 13px;">Estimated Install Time:</label>
+                    <select id="installTime" style="width: 120px; border: 1px solid #ffeeba; background: white;">
+                        <option value="0.5">0.5 hour</option>
+                        <option value="1.0">1.0 hour</option>
+                        <option value="1.5">1.5 hours</option>
+                        <option value="2.0">2.0 hours</option>
+                        <option value="2.5">2.5 hours</option>
+                        <option value="3.0">3.0 hours</option>
+                        <option value="3.5">3.5 hours</option>
+                        <option value="4.0">4.0 hours</option>
+                        <option value="4.5">4.5 hours</option>
+                        <option value="5.0">5.0 hours</option>
+                        <option value="5.5">5.5 hours</option>
+                        <option value="6.0">6.0 hours</option>
+                        <option value="6.5">6.5 hours</option>
+                        <option value="7.0">7.0 hours</option>
+                        <option value="7.5">7.5 hours</option>
+                        <option value="8.0">8.0 hours</option>
+                        <option value="8.5">8.5 hours</option>
+                        <option value="9.0">9.0 hours</option>
+                        <option value="9.5">9.5 hours</option>
+                        <option value="10.0">10.0 hours</option>
+                        <option value="10.5">10.5 hours</option>
+                        <option value="11.0">11.0 hours</option>
+                        <option value="11.5">11.5 hours</option>
+                        <option value="12.0">12.0 hours</option>
+                    </select>
+                </div>
+
                 <!-- Single Scrollable Order Sheet -->
-                <div style="overflow-x: auto; overflow-y: auto; max-height: 450px; -webkit-overflow-scrolling: touch;">
-                    <table class="spec-table" id="ssMainTable"
-                        style="font-size: 10px; margin: 0; min-width: 2400px; border-collapse: collapse;">
+                <div style="overflow-x: auto; overflow-y: auto; max-height: 500px; -webkit-overflow-scrolling: touch;">
+                    <!-- TABLE 1: OPENING / PANEL DETAILS -->
+                    <div
+                        style="background: #eee; padding: 4px 12px; font-weight: 700; font-size: 10px; border-bottom: 1px solid #ccc;">
+                        1. OPENING / PANEL DETAILS</div>
+                    <table class="spec-table" id="ssPanelTable"
+                        style="font-size: 10px; margin: 0; min-width: 1200px; border-collapse: collapse;">
                         <thead style="position: sticky; top: 0; z-index: 10;">
                             <tr style="background: var(--norman-blue); color: white;">
                                 <th
-                                    style="position: sticky; left: 0; z-index: 11; background: var(--norman-blue); min-width: 80px;">
+                                    style="position: sticky; left: 0; z-index: 11; background: var(--norman-blue); width: 100px;">
                                     Room</th>
-                                <th style="min-width: 80px;">Product</th>
-                                <th style="min-width: 75px;">Method</th>
-                                <th style="min-width: 70px;">Colour</th>
-                                <th style="min-width: 65px;">Hinge</th>
-                                <th style="min-width: 65px;">Louvre</th>
-                                <th style="min-width: 55px;">Tilt</th>
-                                <th style="min-width: 65px;">Layout</th>
-                                <th style="min-width: 55px;">Panels</th>
-                                <th style="min-width: 55px;">Stile</th>
-                                <th style="min-width: 60px;">Frame</th>
-                                <th style="min-width: 50px;">Left</th>
-                                <th style="min-width: 45px;">Top</th>
-                                <th style="min-width: 50px;">Right</th>
-                                <th style="min-width: 55px;">Bottom</th>
-                                <th style="min-width: 50px;">Mount</th>
-                                <th style="min-width: 65px;">Light Blk</th>
-                                <th style="min-width: 55px;">Horiz T</th>
-                                <th style="min-width: 55px;">Width</th>
-                                <th style="min-width: 55px;">Height</th>
-                                <th style="min-width: 60px;">Midrail</th>
-                                <th style="min-width: 50px;">Split</th>
-                                <th style="min-width: 65px;">Block Out</th>
-                                <th style="min-width: 60px;">Ring Pull</th>
-                                <th style="min-width: 55px;">Handle</th>
-                                <th style="min-width: 55px;">Picture</th>
-                                <th style="min-width: 80px;">Flyscreen</th>
-                                <th style="min-width: 120px;">Special Instr.</th>
+                                <th style="width: 60px;">Width</th>
+                                <th style="width: 60px;">Height</th>
+                                <th style="width: 60px;">Mount</th>
+                                <th style="width: 60px;">Panels</th>
+                                <th style="width: 80px;">Material</th>
+                                <th style="width: 60px;">Louvre</th>
+                                <th style="width: 60px;">Stile</th>
+                                <th style="width: 80px;">Colour</th>
+                                <th style="width: 100px;">Midrail Ht</th>
+                                <th style="width: 100px;">Method</th>
+                                <th style="width: 80px;">Layout</th>
+                                <th style="width: 80px;">Hinge Col</th>
+                                <th style="width: 60px;">Tilt</th>
                             </tr>
                         </thead>
-                        <tbody id="ssMainRows">
-                            <tr>
-                                <td colspan="28" style="text-align: center; color: var(--text-muted); padding: 20px;">
-                                    No measurements recorded — Add rooms in the Survey tab
-                                </td>
+                        <tbody id="ssPanelRows"></tbody>
+                    </table>
+
+                    <!-- TABLE 2: FRAMING DETAILS -->
+                    <div
+                        style="background: #eee; padding: 4px 12px; font-weight: 700; font-size: 10px; border-bottom: 1px solid #ccc; border-top: 2px solid var(--norman-blue);">
+                        2. FRAMING DETAILS</div>
+                    <table class="spec-table" id="ssFramingTable"
+                        style="font-size: 10px; margin: 0; min-width: 1200px; border-collapse: collapse;">
+                        <thead style="position: sticky; top: 0; z-index: 10;">
+                            <tr style="background: var(--norman-blue); color: white;">
+                                <th
+                                    style="position: sticky; left: 0; z-index: 11; background: var(--norman-blue); width: 100px;">
+                                    Room</th>
+                                <th style="width: 100px;">Frame Type</th>
+                                <th style="width: 50px;">Left</th>
+                                <th style="width: 50px;">Top</th>
+                                <th style="width: 50px;">Right</th>
+                                <th style="width: 50px;">Bottom</th>
+                                <th style="width: 80px;">Tracking</th>
+                                <th style="width: 80px;">Sliding</th>
+                                <th style="width: 60px;">Posts</th>
+                                <th style="width: 250px;">Post Locations</th>
                             </tr>
-                        </tbody>
+                        </thead>
+                        <tbody id="ssFramingRows"></tbody>
+                    </table>
+
+                    <!-- TABLE 3: SPECIALTY DETAILS -->
+                    <div
+                        style="background: #eee; padding: 4px 12px; font-weight: 700; font-size: 10px; border-bottom: 1px solid #ccc; border-top: 2px solid var(--norman-blue);">
+                        3. SPECIALTY DETAILS</div>
+                    <table class="spec-table" id="ssSpecialtyTable"
+                        style="font-size: 10px; margin: 0; min-width: 1200px; border-collapse: collapse;">
+                        <thead style="position: sticky; top: 0; z-index: 10;">
+                            <tr style="background: var(--norman-blue); color: white;">
+                                <th
+                                    style="position: sticky; left: 0; z-index: 11; background: var(--norman-blue); width: 100px;">
+                                    Room</th>
+                                <th style="width: 70px;">Motorised</th>
+                                <th style="width: 70px;">Arch</th>
+                                <th style="width: 70px;">Fixed</th>
+                                <th style="width: 80px;">Raised Pnl</th>
+                                <th style="width: 80px;">Carving</th>
+                                <th style="width: 80px;">Flush Bolt</th>
+                                <th style="width: 80px;">Safety Bolt</th>
+                                <th style="width: 80px;">Centre Stile</th>
+                                <th style="width: 300px;">Room Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ssSpecialtyRows"></tbody>
                     </table>
                 </div>
 
@@ -3333,7 +3399,15 @@
                     product: r.product || defaultProduct,
                     scannedOverrides: {},
                     scannedWidth: r.width,
-                    scannedDrop: r.drop
+                    scannedDrop: r.drop,
+
+                    // New Fields from Scan
+                    tracking: r.scannedData?.tracking || false,
+                    sliding: r.scannedData?.sliding || 'N/A',
+                    specialty: r.scannedData?.specialty || {
+                        motorised: false, arch: false, fixedLouvre: false, raisedPanel: false,
+                        handCarving: false, flushBolt: false, safetyBolt: false, centreStiles: false
+                    }
                 }));
                 state.currentRoom = 0;
                 renderRoomTabs();
@@ -3425,7 +3499,10 @@ Extract ALL data into structured JSON. This form has two possible page types:
 - For Colour: extract full colour name like "Silk White", "Pure White"
 - For Mounting Method: "Hinged", "Track", or "Bi-fold"
 - For Hinge Colour: "Silk White", "Pure White", "Stainless Steel", etc.
-- If a field is blank or illegible, return empty string ""
+- For Tracking: Return true if "Tracking Req'd" is checked or indicated.
+- For Sliding: extract "Open" or "Closed" if indicated, otherwise "N/A".
+- For Specialty Details: Check the boxes for "Motorised", "Liberty Arch", "Fixed Louvre", "Solid Raised", "Hand Carving", "Flush Bolt", "Safety Bolt", "Centre Stiles". Return true if checked/indicated.
+- If a field is blank or illegible, return empty string "" or false for booleans.
 
 Return valid JSON matching this exact structure:
 {
@@ -3452,7 +3529,19 @@ Return valid JSON matching this exact structure:
       "mountingMethod": "string",
       "hingeColour": "string",
       "mount": "string",
-      "frame": "string"
+      "frame": "string",
+      "tracking": "boolean",
+      "sliding": "string",
+      "specialty": {
+        "motorised": "boolean",
+        "arch": "boolean",
+        "fixedLouvre": "boolean",
+        "raisedPanel": "boolean",
+        "handCarving": "boolean",
+        "flushBolt": "boolean",
+        "safetyBolt": "boolean",
+        "centreStiles": "boolean"
+      }
     }
   ]
 }
@@ -3564,10 +3653,9 @@ Return ONLY the JSON, no markdown fences or extra text.`
                 }
 
                 // Propagate verification to state if it's a room spec
-                if (isRoomSpec && state.rooms[state.currentRoom]?.scannedOverrides) {
-                    const key = el.id.replace('room', '');
-                    const specKey = key.charAt(0).toLowerCase() + key.slice(1);
-                    delete state.rooms[state.currentRoom].scannedOverrides[specKey];
+                if (state.rooms[state.currentRoom]?.scannedOverrides) {
+                    const key = el.id.startsWith('room') ? el.id.replace('room', '').charAt(0).toLowerCase() + el.id.replace('room', '').slice(1) : el.id;
+                    delete state.rooms[state.currentRoom].scannedOverrides[key];
                 }
 
                 // Trigger auto-save so Review tab updates immediately
@@ -4148,6 +4236,13 @@ Return ONLY the JSON, no markdown fences or extra text.`
             r.width = document.getElementById('mainWidth').value;
             r.height = document.getElementById('mainHeight').value;
             r.split = document.getElementById('splitValue').value;
+
+            // Specialty Fields (No longer in UI, set defaults or keep if scanned)
+            const spec = r.specialty || {};
+            r.specialty = spec; // Preserve existing data if any (from scan)
+            r.stileSize = r.stileSize || '50';
+            r.tracking = r.tracking || false;
+            r.sliding = r.sliding || 'N/A';
             r.comments = document.getElementById('roomComments').value;
             r.posts = [...roomPosts];
             r.dividers = [...roomDividers];
@@ -4181,6 +4276,7 @@ Return ONLY the JSON, no markdown fences or extra text.`
             document.getElementById('mainWidth').value = r.width || '';
             document.getElementById('mainHeight').value = r.height || '';
             document.getElementById('splitValue').value = r.split || '';
+
             document.getElementById('roomComments').value = r.comments || '';
             roomPosts = r.posts ? [...r.posts] : [];
             roomDividers = r.dividers ? [...r.dividers] : [];
@@ -4705,50 +4801,81 @@ Return ONLY the JSON, no markdown fences or extra text.`
 
             // Populate Main 28-column Table
             if (state.rooms.length > 0) {
-                const rows = state.rooms.map((r, i) => {
-                    // Collect extras for summary
-                    const hasCoverStrip = r.coverStrip === true || r.coverStrip === 'Yes';
-                    if (hasCoverStrip && r.height) coverStripHeights.push(r.height);
+                let panelHTML = '';
+                let framingHTML = '';
+                let specialtyHTML = '';
+
+                state.rooms.forEach((r, i) => {
+                    const roomName = r.name || 'Room ' + (i + 1);
+                    const roomProduct = r.specs?.product || product;
+                    const roomMethod = r.specs?.method || method;
+                    const roomColor = r.specs?.color || colour;
+                    const roomHinge = r.specs?.hinge || hinge;
+                    const roomBlade = r.specs?.blade || louvre;
+                    const roomTilt = r.specs?.tilt || tilt;
+                    const roomStile = r.stileSize || stile;
+                    const roomFrame = r.specs?.frame || frame;
+                    const roomMount = r.specs?.mount || mount;
+
+                    // Collect extras
+                    if ((r.coverStrip === true || r.coverStrip === 'Yes') && r.height) coverStripHeights.push(r.height);
                     if (r.packers) allPackers = allPackers.concat(r.packers);
 
-                    // Build midrail string
-                    const midrails = (r.dividers || []).map((d, di) => `${d.value}${d.critical ? '(C)' : ''}`).join(', ') || '-';
-
-                    // Build posts/layout string
+                    const midrails = (r.dividers || []).map(d => `${d.value}${d.critical ? '(C)' : ''}`).join(', ') || '-';
                     const layout = (r.posts || []).map(p => p.label).join('-') || '-';
+                    const postLocations = (r.posts || []).map(p => `${p.label}@${p.pos}`).join(', ') || '-';
+                    const spec = r.specialty || {};
 
-                    return `<tr>
-                        <td style="position: sticky; left: 0; background: white; z-index: 1; font-weight: 600;">${r.name || 'Room ' + (i + 1)}</td>
-                        <td>${product}</td>
-                        <td>${method}</td>
-                        <td>${colour}</td>
-                        <td>${hinge}</td>
-                        <td>${louvre}</td>
-                        <td>${tilt}</td>
-                        <td>${layout}</td>
+                    // 1. OPENING / PANEL DETAILS
+                    panelHTML += `<tr>
+                        <td style="position: sticky; left: 0; background: white; z-index: 1; font-weight: 600;">${roomName}</td>
+                        <td>${r.width || '-'}</td>
+                        <td>${r.height || '-'}</td>
+                        <td>${roomMount}</td>
                         <td>${r.panelQty || '-'}</td>
-                        <td>${stile}</td>
-                        <td>${frame}</td>
+                        <td>${roomProduct}</td>
+                        <td>${roomBlade}</td>
+                        <td>${roomStile}mm</td>
+                        <td>${roomColor}</td>
+                        <td>${midrails}</td>
+                        <td>${roomMethod}</td>
+                        <td>${layout}</td>
+                        <td>${roomHinge}</td>
+                        <td>${roomTilt}</td>
+                    </tr>`;
+
+                    // 2. FRAMING DETAILS
+                    framingHTML += `<tr>
+                        <td style="position: sticky; left: 0; background: white; z-index: 1; font-weight: 600;">${roomName}</td>
+                        <td>${roomFrame}</td>
                         <td>${r.frame?.left || '-'}</td>
                         <td>${r.frame?.top || '-'}</td>
                         <td>${r.frame?.right || '-'}</td>
                         <td>${r.frame?.bottom || '-'}</td>
-                        <td>${mount}</td>
-                        <td>${r.lightBlock || '-'}</td>
-                        <td>${r.horizontal || '-'}</td>
-                        <td>${r.width || '-'}</td>
-                        <td>${r.height || '-'}</td>
-                        <td>${midrails}</td>
-                        <td>${r.split || '-'}</td>
-                        <td>${r.blockOut || r.splitBlockOut || '-'}</td>
-                        <td>${r.ringPull || '-'}</td>
-                        <td>${r.handle || '-'}</td>
-                        <td>${r.picture ? '✓' : '-'}</td>
-                        <td>${r.flyscreenBeading || '-'}</td>
-                        <td style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${r.comments || '-'}</td>
+                        <td>${r.tracking ? 'YES (Track)' : 'No'}</td>
+                        <td>${r.sliding || 'N/A'}</td>
+                        <td>${(r.posts || []).length}</td>
+                        <td>${postLocations}</td>
                     </tr>`;
-                }).join('');
-                document.getElementById('ssMainRows').innerHTML = rows;
+
+                    // 3. SPECIALTY DETAILS
+                    specialtyHTML += `<tr>
+                        <td style="position: sticky; left: 0; background: white; z-index: 1; font-weight: 600;">${roomName}</td>
+                        <td>${spec.motorised ? '✓' : '-'}</td>
+                        <td>${spec.arch ? '✓' : '-'}</td>
+                        <td>${spec.fixedLouvre ? '✓' : '-'}</td>
+                        <td>${spec.raisedPanel ? '✓' : '-'}</td>
+                        <td>${spec.handCarving ? '✓' : '-'}</td>
+                        <td>${spec.flushBolt ? '✓' : '-'}</td>
+                        <td>${spec.safetyBolt ? '✓' : '-'}</td>
+                        <td>${spec.centreStiles ? '✓' : '-'}</td>
+                        <td style="max-width: 250px; text-align: left;">${r.comments || '-'}</td>
+                    </tr>`;
+                });
+
+                document.getElementById('ssPanelRows').innerHTML = panelHTML;
+                document.getElementById('ssFramingRows').innerHTML = framingHTML;
+                document.getElementById('ssSpecialtyRows').innerHTML = specialtyHTML;
 
                 // Build Additional Items summary
                 if (coverStripHeights.length > 0) {
@@ -4759,6 +4886,11 @@ Return ONLY the JSON, no markdown fences or extra text.`
                     const packerText = allPackers.map(p => `${p.qty}× ${p.w}×${p.h}×${p.d}`).join(', ');
                     additionalItems.push(`Packers: ${packerText}`);
                 }
+            } else {
+                const empty = `<tr><td colspan="15" style="text-align: center; color: var(--text-muted); padding: 20px;">No rooms recorded</td></tr>`;
+                document.getElementById('ssPanelRows').innerHTML = empty;
+                document.getElementById('ssFramingRows').innerHTML = empty;
+                document.getElementById('ssSpecialtyRows').innerHTML = empty;
             }
 
             // Populate Comments
@@ -4793,6 +4925,7 @@ Return ONLY the JSON, no markdown fences or extra text.`
                 consultant: document.getElementById('consultantEmail')?.value || '',
                 surveyor: document.getElementById('surveyor')?.value || '',
                 date: document.getElementById('jobDate').value,
+                installTime: document.getElementById('installTime').value,
                 // Product specs
                 product: document.getElementById('specProduct').value,
                 method: document.getElementById('specMountMethod')?.value || '',
@@ -4820,42 +4953,44 @@ Return ONLY the JSON, no markdown fences or extra text.`
             downloadOrderCSV(job);
 
             // ---- Build clean, readable email body ----
-            const roomSummary = buildRoomSummary(job);
-            const extras = buildExtras(job);
+            const officeSubject = encodeURIComponent(`Check measure, ${job.client || 'Customer'}, ${job.ref || 'No Ref'}`);
 
-            const officeSubject = encodeURIComponent(`C/M ${job.ref || ''} ${job.client || ''}`);
-            const officeBody = encodeURIComponent(
-                `SHUTTER ORDER\n` +
-                `Ref: ${job.ref}  |  Date: ${job.date}\n` +
-                `\n` +
-                `CLIENT\n` +
-                `  Name:      ${job.client}\n` +
-                `  Address:   ${job.address}\n` +
-                `  Phone:     ${job.phone}\n` +
-                `  Email:     ${job.email}\n` +
-                `  Surveyor:  ${job.surveyor}\n` +
-                `\n` +
-                `DEFAULT SPECS\n` +
-                `  Product:   ${job.product}\n` +
-                `  Colour:    ${job.colour}\n` +
-                `  Louvre:    ${job.louvreSize}\n` +
-                `  Tilt:      ${job.tilt}\n` +
-                `  Hinge:     ${job.hinge}\n` +
-                `  Stile:     ${job.stile}\n` +
-                `  Frame:     ${job.frame}\n` +
-                `  Mount:     ${job.mount} (${job.method})\n` +
-                `\n` +
-                `ROOMS (${job.roomCount})\n` +
-                roomSummary +
-                `\n` +
-                (extras ? `EXTRAS\n${extras}\n\n` : '') +
-                `COMMENTS\n` +
-                `  ${job.comments || 'None'}\n` +
-                `\n` +
-                `---\n` +
-                `CSV spreadsheet auto-downloaded.\n` +
-                `Please attach the CSV file to this email.\n`
-            );
+            let emailBody = `NORMAN SHUTTER ORDER\n`;
+            emailBody += `Ref: ${job.ref}  |  Date: ${job.date}  |  Est. Install: ${job.installTime}h\n\n`;
+            emailBody += `CLIENT DETAILS\n`;
+            emailBody += `  Name:      ${job.client}\n`;
+            emailBody += `  Address:   ${job.address}\n`;
+            emailBody += `  Phone:     ${job.phone}\n`;
+            emailBody += `  Surveyor:  ${job.surveyor}\n\n`;
+
+            emailBody += `1. OPENING / PANEL DETAILS\n`;
+            emailBody += `Rm | W x H | Mt | Pan | Product | Louvre | Stile | Colour | Layout | Tilt\n`;
+            job.roomsData.forEach((r, i) => {
+                const stile = r.stileSize || job.stile || '-';
+                emailBody += `${i + 1} | ${r.width || '?'}x${r.height || '?'} | ${r.specs?.mount || job.mount} | ${r.panelQty || '?'} | ${r.specs?.product || job.product} | ${r.specs?.blade || job.louvreSize} | ${stile}mm | ${r.specs?.color || job.colour} | ${r.posts?.map(p => p.label).join('-') || '-'} | ${r.specs?.tilt || job.tilt}\n`;
+            });
+
+            emailBody += `\n2. FRAMING DETAILS\n`;
+            emailBody += `Rm | Frame Type | L | T | R | B | Track | Sliding | Posts\n`;
+            job.roomsData.forEach((r, i) => {
+                emailBody += `${i + 1} | ${r.specs?.frame || job.frame} | ${r.frame?.left || '-'} | ${r.frame?.top || '-'} | ${r.frame?.right || '-'} | ${r.frame?.bottom || '-'} | ${r.tracking ? 'Yes' : 'No'} | ${r.sliding || 'N/A'} | ${r.posts?.length || 0}\n`;
+            });
+
+            emailBody += `\n3. SPECIALTY DETAILS\n`;
+            emailBody += `Rm | Motor | Arch | Fixed | Raised | Carve | Flush | Safety | Centre\n`;
+            job.roomsData.forEach((r, i) => {
+                const s = r.specialty || {};
+                emailBody += `${i + 1} | ${s.motorised ? 'Y' : '-'} | ${s.arch ? 'Y' : '-'} | ${s.fixedLouvre ? 'Y' : '-'} | ${s.raisedPanel ? 'Y' : '-'} | ${s.handCarving ? 'Y' : '-'} | ${s.flushBolt ? 'Y' : '-'} | ${s.safetyBolt ? 'Y' : '-'} | ${s.centreStiles ? 'Y' : '-'}\n`;
+            });
+
+            const extras = buildExtras(job);
+            if (extras) emailBody += `\nEXTRAS\n${extras}`;
+
+            if (job.comments) emailBody += `\nCOMMENTS\n${job.comments}\n`;
+
+            emailBody += `\n---\nCSV spreadsheet auto-downloaded. Please ATTACH it to this email.`;
+
+            const officeBody = encodeURIComponent(emailBody);
             window.open(`mailto:Angus@gasignite.com?subject=${officeSubject}&body=${officeBody}`, '_blank'); // Production: edmund.robless@westral.com.au
 
             // Email 2: To client (blank body, just address)
@@ -4951,10 +5086,9 @@ Return ONLY the JSON, no markdown fences or extra text.`
         // Generate and download a CSV file with full room data
         function downloadOrderCSV(job) {
             const headers = [
-                'Room', 'Product', 'Width (mm)', 'Height (mm)', 'Panels',
-                'Method', 'Mount', 'Frame', 'Colour', 'Hinge', 'Louvre',
-                'Tilt', 'Stile', 'Layout', 'Frame L', 'Frame T', 'Frame R', 'Frame B',
-                'Midrail', 'Split', 'Notes'
+                'Room', 'Width', 'Height', 'Mount', 'Panels', 'Product', 'Louvre', 'Stile', 'Colour', 'Midrail', 'Method', 'Layout', 'Hinge', 'Tilt',
+                'Frame Type', 'Frame L', 'Frame T', 'Frame R', 'Frame B', 'Tracking', 'Sliding', 'Post Qty', 'Post Locations',
+                'Motorised', 'Arch', 'Fixed', 'Raised', 'Carving', 'Flush Bolt', 'Safety Bolt', 'Centre Stile', 'Notes'
             ];
 
             let rows = [headers.join(',')];
@@ -4963,35 +5097,43 @@ Return ONLY the JSON, no markdown fences or extra text.`
                 job.roomsData.forEach((r, i) => {
                     const midrails = (r.dividers || []).map(d => `${d.value}${d.critical ? '(C)' : ''}`).join('; ') || '';
                     const layout = (r.posts || []).map(p => p.label).join('-') || '';
+                    const postLocations = (r.posts || []).map(p => `${p.label}@${p.pos}`).join('; ') || '';
                     const roomProduct = r.specs?.product || job.product || '';
-                    const csvEscape = (val) => {
-                        val = String(val || '');
-                        if (val.includes(',') || val.includes('"') || val.includes('\n')) {
-                            return '"' + val.replace(/"/g, '""') + '"';
-                        }
-                        return val;
-                    };
+                    const roomStile = r.stileSize || job.stile || '';
+                    const spec = r.specialty || {};
+
                     rows.push([
                         csvEscape(r.name || 'Room ' + (i + 1)),
-                        csvEscape(roomProduct),
                         r.width || '',
                         r.height || '',
+                        csvEscape(r.specs?.mount || job.mount),
                         r.panelQty || '',
+                        csvEscape(roomProduct),
+                        csvEscape(r.specs?.blade || job.louvreSize),
+                        csvEscape(roomStile),
+                        csvEscape(r.specs?.color || job.colour),
+                        csvEscape(midrails),
                         csvEscape(job.method),
-                        csvEscape(job.mount),
-                        csvEscape(job.frame),
-                        csvEscape(job.colour),
-                        csvEscape(job.hinge),
-                        csvEscape(job.louvreSize),
-                        csvEscape(job.tilt),
-                        csvEscape(job.stile),
                         csvEscape(layout),
+                        csvEscape(r.specs?.hinge || job.hinge),
+                        csvEscape(r.specs?.tilt || job.tilt),
+                        csvEscape(r.specs?.frame || job.frame),
                         r.frame?.left || '',
                         r.frame?.top || '',
                         r.frame?.right || '',
                         r.frame?.bottom || '',
-                        csvEscape(midrails),
-                        csvEscape(r.split || ''),
+                        r.tracking ? 'YES' : 'No',
+                        csvEscape(r.sliding || 'N/A'),
+                        r.posts?.length || 0,
+                        csvEscape(postLocations),
+                        spec.motorised ? 'YES' : '',
+                        spec.arch ? 'YES' : '',
+                        spec.fixedLouvre ? 'YES' : '',
+                        spec.raisedPanel ? 'YES' : '',
+                        spec.handCarving ? 'YES' : '',
+                        spec.flushBolt ? 'YES' : '',
+                        spec.safetyBolt ? 'YES' : '',
+                        spec.centreStiles ? 'YES' : '',
                         csvEscape(r.comments || '')
                     ].join(','));
                 });
