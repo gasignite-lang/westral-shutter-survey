@@ -792,15 +792,26 @@
             </style>
 
             <!-- Room Name -->
-            <input type="text" id="roomName" placeholder="Room / Location Name"
-                style="text-transform: uppercase; font-weight: 700; text-align: center; font-size: 18px;"
-                oninput="if(state.rooms[state.currentRoom]) { state.rooms[state.currentRoom].name = this.value; renderRoomTabs(); }">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <input type="text" id="roomName" placeholder="Room / Location Name"
+                    style="flex: 1; text-transform: uppercase; font-weight: 700; text-align: center; font-size: 18px;"
+                    oninput="if(state.rooms[state.currentRoom]) { state.rooms[state.currentRoom].name = this.value; renderRoomTabs(); }"
+                    onclick="verify(this)">
+                <button onclick="copyFromPrevious()" class="btn-secondary" style="padding: 6px; aspect-ratio: 1/1;"
+                    title="Copy from Previous Room">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                </button>
+            </div>
 
             <!-- Panel Qty + Layout + Cover Strip -->
             <div class="grid-2" style="margin-bottom: 12px;">
                 <div>
                     <label class="label">Panel Qty</label>
-                    <input type="number" id="panelQty" value="2" min="1" max="8" onclick="this.select()"
+                    <input type="number" id="panelQty" value="2" min="1" max="8" onclick="this.select(); verify(this)"
                         onchange="updateMaxWidth()">
                 </div>
                 <div style="grid-column: 1 / -1;">
@@ -815,7 +826,7 @@
                 <div class="card-title">Width (mm) <span id="maxWidthLabel"
                         style="margin-left: auto; font-size: 10px; color: var(--text-muted);">Max: 1828</span></div>
                 <input type="number" id="mainWidth" placeholder="Width" style="font-size: 20px; text-align: center;"
-                    oninput="validateWidth(this)">
+                    oninput="validateWidth(this)" onclick="verify(this)">
 
                 <!-- Posts/Breaks List -->
                 <div class="card-title" style="margin-top: 12px;">Posts / Breaks</div>
@@ -836,7 +847,7 @@
             <div class="card">
                 <div class="card-title">Height (mm)</div>
                 <input type="number" id="mainHeight" placeholder="Height" style="font-size: 20px; text-align: center;"
-                    oninput="validateHeight(this)">
+                    oninput="validateHeight(this)" onclick="verify(this)">
 
                 <!-- Cover Strip (Checkbox) -->
                 <div style="margin-top: 8px; display: flex; align-items: center; justify-content: center;">
@@ -3391,24 +3402,48 @@
                 });
 
                 const defaultProduct = document.getElementById('specProduct').value || 'Woodlore';
-                state.rooms = rooms.map(r => ({
-                    name: r.name,
-                    posts: [], dividers: [], packers: [], drawings: [],
-                    frame: { top: 'YES', left: 'YES', right: 'YES', bottom: 'YES' },
-                    specs: { product: r.product || defaultProduct },
-                    product: r.product || defaultProduct,
-                    scannedOverrides: {},
-                    scannedWidth: r.width,
-                    scannedDrop: r.drop,
+                state.rooms = rooms.map(r => {
+                    const m = r.scannedData || {};
+                    const overrides = {};
+                    const first = data.measurements[0] || {};
 
-                    // New Fields from Scan
-                    tracking: r.scannedData?.tracking || false,
-                    sliding: r.scannedData?.sliding || 'N/A',
-                    specialty: r.scannedData?.specialty || {
-                        motorised: false, arch: false, fixedLouvre: false, raisedPanel: false,
-                        handCarving: false, flushBolt: false, safetyBolt: false, centreStiles: false
-                    }
-                }));
+                    // Identify specs that differ from the first room (Project Default)
+                    ['productLine', 'blade', 'color', 'mountingMethod', 'hingeColour'].forEach(key => {
+                        const specKey = key.charAt(0).toLowerCase() + key.slice(1);
+                        if (m[key] && m[key] !== first[key]) {
+                            overrides[specKey] = true;
+                        }
+                    });
+
+                    return {
+                        name: r.name,
+                        posts: [], dividers: [], packers: [], drawings: [],
+                        frame: { top: 'YES', left: 'YES', right: 'YES', bottom: 'YES' },
+                        specs: {
+                            product: r.product || defaultProduct,
+                            mount: m.mount || '',
+                            mountMethod: m.mountingMethod || '',
+                            frame: m.frame || '',
+                            color: m.color || '',
+                            hinge: m.hingeColour || '',
+                            blade: m.blade || ''
+                        },
+                        product: r.product || defaultProduct,
+                        scannedOverrides: overrides,
+                        scannedWidth: r.width,
+                        scannedDrop: r.drop,
+                        scannedName: !!(r.name && r.name !== 'Room'),
+                        scannedPanels: !!m.panelQty,
+
+                        // New Fields from Scan
+                        tracking: m.tracking || false,
+                        sliding: m.sliding || 'N/A',
+                        specialty: m.specialty || {
+                            motorised: false, arch: false, fixedLouvre: false, raisedPanel: false,
+                            handCarving: false, flushBolt: false, safetyBolt: false, centreStiles: false
+                        }
+                    };
+                });
                 state.currentRoom = 0;
                 renderRoomTabs();
                 loadRoomData(0);
@@ -3620,7 +3655,10 @@ Return ONLY the JSON, no markdown fences or extra text.`
                 makeRoom('Master Bed', defaultProduct),
                 makeRoom('Bed 2', defaultProduct),
                 makeRoom('Living', defaultProduct),
-                makeRoom('Bathroom', 'Woodlore Plus')
+                {
+                    ...makeRoom('Bathroom', 'Woodlore Plus'),
+                    scannedOverrides: { product: true }
+                }
             ];
             state.currentRoom = 0;
             renderRoomTabs();
@@ -3653,9 +3691,19 @@ Return ONLY the JSON, no markdown fences or extra text.`
                 }
 
                 // Propagate verification to state if it's a room spec
-                if (state.rooms[state.currentRoom]?.scannedOverrides) {
-                    const key = el.id.startsWith('room') ? el.id.replace('room', '').charAt(0).toLowerCase() + el.id.replace('room', '').slice(1) : el.id;
-                    delete state.rooms[state.currentRoom].scannedOverrides[key];
+                if (state.rooms[state.currentRoom]) {
+                    const r = state.rooms[state.currentRoom];
+                    const id = el.id;
+
+                    if (id === 'roomName') r.scannedName = false;
+                    if (id === 'panelQty') r.scannedPanels = false;
+                    if (id === 'mainWidth') r.scannedWidth = false;
+                    if (id === 'mainHeight') r.scannedDrop = false;
+
+                    if (r.scannedOverrides) {
+                        const key = id.startsWith('room') ? id.replace('room', '').charAt(0).toLowerCase() + id.slice(1) : id;
+                        delete r.scannedOverrides[key];
+                    }
                 }
 
                 // Trigger auto-save so Review tab updates immediately
@@ -4196,7 +4244,48 @@ Return ONLY the JSON, no markdown fences or extra text.`
             if (topContainer) topContainer.innerHTML = '';
         }
 
-        function selectRoom(idx) {
+        function copyFromPrevious() {
+            if (state.currentRoom <= 0) {
+                alert("No previous room to copy from.");
+                return;
+            }
+            saveCurrentRoomData(); // Save current state first
+
+            const prev = state.rooms[state.currentRoom - 1];
+            const current = state.rooms[state.currentRoom];
+
+            // Shallow copy key properties
+            // We DON'T copy name or drawings, but we copy almost everything else
+            current.panelQty = prev.panelQty;
+            current.layout = prev.layout;
+            current.coverStrip = prev.coverStrip;
+            current.width = prev.width;
+            current.height = prev.height;
+            current.split = prev.split;
+            current.comments = prev.comments;
+            current.stileSize = prev.stileSize;
+            current.tracking = prev.tracking;
+            current.sliding = prev.sliding;
+
+            // Deep copy objects/arrays
+            current.posts = prev.posts ? JSON.parse(JSON.stringify(prev.posts)) : [];
+            current.dividers = prev.dividers ? JSON.parse(JSON.stringify(prev.dividers)) : [];
+            current.packers = prev.packers ? JSON.parse(JSON.stringify(prev.packers)) : [];
+            current.frame = prev.frame ? JSON.parse(JSON.stringify(prev.frame)) : { top: 'YES', left: 'YES', right: 'YES', bottom: 'YES' };
+            current.specs = prev.specs ? JSON.parse(JSON.stringify(prev.specs)) : { product: 'Woodlore' };
+            current.specialty = prev.specialty ? JSON.parse(JSON.stringify(prev.specialty)) : { motorised: false };
+
+            // Flag as NOT scanned (verified because it's a manual action)
+            current.scannedWidth = false;
+            current.scannedDrop = false;
+            current.scannedPanels = false;
+            current.scannedOverrides = {};
+
+            loadRoomData(state.currentRoom);
+            alert("Copied configuration from " + (prev.name || "previous room") + ".");
+        }
+
+        function switchRoom(idx) {
             saveCurrentRoomData();
             state.currentRoom = idx;
             // Mark room as visited (no longer blue/unvisited)
@@ -4268,13 +4357,24 @@ Return ONLY the JSON, no markdown fences or extra text.`
 
         function loadRoomData(idx) {
             const r = state.rooms[idx] || {};
-            document.getElementById('roomName').value = r.name || '';
-            document.getElementById('panelQty').value = r.panelQty || 2;
+            const nameEl = document.getElementById('roomName');
+            const qtyEl = document.getElementById('panelQty');
+            const wEl = document.getElementById('mainWidth');
+            const hEl = document.getElementById('mainHeight');
+
+            nameEl.value = r.name || '';
+            qtyEl.value = r.panelQty || 2;
+            wEl.value = r.width || '';
+            hEl.value = r.height || '';
+
+            // Apply scanned styling
+            if (r.scannedName) nameEl.classList.add('scanned'); else nameEl.classList.remove('scanned');
+            if (r.scannedPanels) qtyEl.classList.add('scanned'); else qtyEl.classList.remove('scanned');
+            if (r.scannedWidth) wEl.classList.add('scanned'); else wEl.classList.remove('scanned');
+            if (r.scannedDrop) hEl.classList.add('scanned'); else hEl.classList.remove('scanned');
+
             document.getElementById('layout').value = r.layout || '';
-            // Default Cover Strip to true if undefined, else use saved boolean
             document.getElementById('coverStrip').checked = (r.coverStrip !== false);
-            document.getElementById('mainWidth').value = r.width || '';
-            document.getElementById('mainHeight').value = r.height || '';
             document.getElementById('splitValue').value = r.split || '';
 
             document.getElementById('roomComments').value = r.comments || '';
