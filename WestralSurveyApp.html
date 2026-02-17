@@ -3145,6 +3145,9 @@
                 el.value = '••••••••' + savedKey.slice(-4);
                 el.type = 'text';
             }
+
+            // Populate dropdowns from product data on first load
+            updateProductOptions();
         }
 
         function persistActiveSession() {
